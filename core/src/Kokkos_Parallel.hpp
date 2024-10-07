@@ -128,7 +128,7 @@ namespace Kokkos {
  * If \c execution_space is not defined DefaultExecutionSpace will be used.
  */
 template <
-    class ExecPolicy, class FunctorType,
+    bool Polly   = false, class ExecPolicy, class FunctorType,
     class Enable = std::enable_if_t<is_execution_policy<ExecPolicy>::value>>
 inline void parallel_for(const std::string& str, const ExecPolicy& policy,
                          const FunctorType& functor) {
@@ -143,19 +143,19 @@ inline void parallel_for(const std::string& str, const ExecPolicy& policy,
       Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
           Impl::ParallelFor<FunctorType, ExecPolicy>>(functor, inner_policy);
 
-  closure.execute();
+  closure.template execute<Polly>();
 
   Kokkos::Tools::Impl::end_parallel_for(inner_policy, functor, str, kpID);
 }
 
-template <class ExecPolicy, class FunctorType>
+template <bool Polly = false, class ExecPolicy, class FunctorType>
 inline void parallel_for(
     const ExecPolicy& policy, const FunctorType& functor,
     std::enable_if_t<is_execution_policy<ExecPolicy>::value>* = nullptr) {
-  Kokkos::parallel_for("", policy, functor);
+  Kokkos::parallel_for<Polly>("", policy, functor);
 }
 
-template <class FunctorType>
+template <bool Polly = false, class FunctorType>
 inline void parallel_for(const std::string& str, const size_t work_count,
                          const FunctorType& functor) {
   using execution_space =
@@ -164,12 +164,12 @@ inline void parallel_for(const std::string& str, const size_t work_count,
   using policy = RangePolicy<execution_space>;
 
   policy execution_policy = policy(0, work_count);
-  ::Kokkos::parallel_for(str, execution_policy, functor);
+  ::Kokkos::parallel_for<Polly>(str, execution_policy, functor);
 }
 
-template <class FunctorType>
+template <bool Polly = false, class FunctorType>
 inline void parallel_for(const size_t work_count, const FunctorType& functor) {
-  ::Kokkos::parallel_for("", work_count, functor);
+  ::Kokkos::parallel_for<Polly>("", work_count, functor);
 }
 
 }  // namespace Kokkos

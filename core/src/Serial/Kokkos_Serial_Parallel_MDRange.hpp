@@ -19,6 +19,7 @@
 
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
+#include <impl/KokkosExp_Host_Iterate.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -35,7 +36,17 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
   const iterate_type m_iter;
 
-  void exec() const {
+  template <bool Polly>
+  std::enable_if_t<Polly> exec() const {
+    const typename Kokkos::Impl::HostIterate<
+        MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+        iter(m_iter.m_rp);
+
+    iter();
+  }
+
+  template <bool Polly>
+  std::enable_if_t<!Polly> exec() const {
     const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
     for (typename Policy::member_type i = 0; i < e; ++i) {
       m_iter(i);
@@ -43,6 +54,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
  public:
+  template <bool Polly>
   inline void execute() const {
     // caused a possibly codegen-related slowdown, especially in GCC 9-11
     // with KOKKOS_ARCH_NATIVE
@@ -54,7 +66,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
         m_iter.m_rp.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->exec();
+    this->exec<Polly>();
   }
   template <typename Policy, typename Functor>
   static int max_tile_size_product(const Policy&, const Functor&) {

@@ -18,6 +18,7 @@
 #define KOKKOS_SERIAL_PARALLEL_RANGE_HPP
 
 #include <Kokkos_Parallel.hpp>
+#include <iostream>
 
 namespace Kokkos {
 namespace Impl {
@@ -30,16 +31,35 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   const FunctorType m_functor;
   const Policy m_policy;
 
-  template <class TagType>
-  std::enable_if_t<std::is_void_v<TagType>> exec() const {
+  template <class TagType, bool Polly>
+  std::enable_if_t<std::is_void_v<TagType> and Polly> exec() const {
+    std::cerr << "ENABLE POLLY" << std::endl;
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
       m_functor(i);
     }
   }
 
-  template <class TagType>
-  std::enable_if_t<!std::is_void_v<TagType>> exec() const {
+  template <class TagType, bool Polly>
+  std::enable_if_t<std::is_void_v<TagType> and !Polly> exec() const {
+    const typename Policy::member_type e = m_policy.end();
+    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+      m_functor(i);
+    }
+  }
+
+  template <class TagType, bool Polly>
+  std::enable_if_t<!std::is_void_v<TagType> and Polly> exec() const {
+    std::cerr << "ENABLE POLLY" << std::endl;
+    const TagType t{};
+    const typename Policy::member_type e = m_policy.end();
+    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+      m_functor(t, i);
+    }
+  }
+
+  template <class TagType, bool Polly>
+  std::enable_if_t<!std::is_void_v<TagType> and !Polly> exec() const {
     const TagType t{};
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
@@ -48,6 +68,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
     // caused a possibly codegen-related slowdown, especially in GCC 9-11
     // with KOKKOS_ARCH_NATIVE
@@ -58,7 +79,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     auto* internal_instance = m_policy.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->template exec<typename Policy::work_tag>();
+    this->template exec<typename Policy::work_tag, Polly>();
   }
 
   inline ParallelFor(const FunctorType& arg_functor, const Policy& arg_policy)
