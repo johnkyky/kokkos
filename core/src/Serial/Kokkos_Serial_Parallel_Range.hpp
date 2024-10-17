@@ -104,8 +104,18 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
   const Policy m_policy;
   const pointer_type m_result_ptr;
 
-  template <class TagType>
-  inline std::enable_if_t<std::is_void_v<TagType>> exec(
+  template <class TagType, bool Polly>
+  inline std::enable_if_t<std::is_void_v<TagType> and Polly> exec(
+      reference_type update) const {
+    std::cerr << "ENABLE POLLY a" << std::endl;
+    const typename Policy::member_type e = m_policy.end();
+    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+      m_functor_reducer.get_functor()(i, update);
+    }
+  }
+
+  template <class TagType, bool Polly>
+  inline std::enable_if_t<std::is_void_v<TagType> and !Polly> exec(
       reference_type update) const {
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
@@ -113,8 +123,20 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
     }
   }
 
-  template <class TagType>
-  inline std::enable_if_t<!std::is_void_v<TagType>> exec(
+  template <class TagType, bool Polly>
+  inline std::enable_if_t<!std::is_void_v<TagType> and Polly> exec(
+      reference_type update) const {
+    std::cerr << "ENABLE POLLY b" << std::endl;
+    const TagType t{};
+
+    const typename Policy::member_type e = m_policy.end();
+    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+      m_functor_reducer.get_functor()(t, i, update);
+    }
+  }
+
+  template <class TagType, bool Polly>
+  inline std::enable_if_t<!std::is_void_v<TagType> and !Polly> exec(
       reference_type update) const {
     const TagType t{};
 
@@ -125,6 +147,7 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
   }
 
  public:
+  template <bool Polly>
   inline void execute() const {
     const size_t pool_reduce_size =
         m_functor_reducer.get_reducer().value_size();
@@ -155,7 +178,7 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
 
     reference_type update = m_functor_reducer.get_reducer().init(ptr);
 
-    this->template exec<WorkTag>(update);
+    this->template exec<WorkTag, Polly>(update);
 
     m_functor_reducer.get_reducer().final(ptr);
   }

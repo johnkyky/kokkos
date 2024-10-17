@@ -38,9 +38,10 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
   template <bool Polly>
   std::enable_if_t<Polly> exec() const {
+    std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
         MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
-        iter(m_iter.m_rp);
+        iter(m_iter.m_rp, m_iter.m_func);
 
     iter();
   }
@@ -102,7 +103,18 @@ class ParallelReduce<CombinedFunctorReducerType,
   const iterate_type m_iter;
   const pointer_type m_result_ptr;
 
-  inline void exec(reference_type update) const {
+  template <bool Polly>
+  inline std::enable_if_t<Polly> exec(reference_type update) const {
+    std::cerr << "Polly c" << std::endl;
+    Kokkos::Impl::HostIterate<MDRangePolicy, CombinedFunctorReducerType,
+                              WorkTag, reference_type>
+        iter(m_iter.m_rp, m_iter.m_func);
+
+    iter(update);
+  }
+
+  template <bool Polly>
+  inline std::enable_if_t<!Polly> exec(reference_type update) const {
     const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
     for (typename Policy::member_type i = 0; i < e; ++i) {
       m_iter(i, update);
@@ -119,6 +131,8 @@ class ParallelReduce<CombinedFunctorReducerType,
      */
     return 1024;
   }
+
+  template <bool Polly>
   inline void execute() const {
     const ReducerType& reducer     = m_iter.m_func.get_reducer();
     const size_t pool_reduce_size  = reducer.value_size();
@@ -150,7 +164,7 @@ class ParallelReduce<CombinedFunctorReducerType,
 
     reference_type update = reducer.init(ptr);
 
-    this->exec(update);
+    this->exec<Polly>(update);
 
     reducer.final(ptr);
   }
