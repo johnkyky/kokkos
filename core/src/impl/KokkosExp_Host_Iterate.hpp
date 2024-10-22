@@ -476,8 +476,9 @@ template <typename IType, bool IsLeft>
 struct Loop_Type<1, IType, IsLeft, void, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     constexpr int index = 0;
     for (IType i0 = (IType)lower[index]; i0 < static_cast<IType>(upper[index]);
          ++i0) {
@@ -487,8 +488,9 @@ struct Loop_Type<1, IType, IsLeft, void, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 1" << std::endl;
     constexpr int index = 0;
     for (IType i0 = (IType)lower[index]; i0 < static_cast<IType>(upper[index]);
@@ -503,8 +505,9 @@ template <typename IType, bool IsLeft, typename Tagged>
 struct Loop_Type<1, IType, IsLeft, Tagged, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 1" << std::endl;
     constexpr int index = 0;
     for (IType i0 = (IType)lower[index]; i0 < static_cast<IType>(upper[index]);
@@ -515,8 +518,9 @@ struct Loop_Type<1, IType, IsLeft, Tagged, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag left Rank 1" << std::endl;
     constexpr int index = 0;
     for (IType i0 = (IType)lower[index]; i0 < static_cast<IType>(upper[index]);
@@ -531,8 +535,9 @@ template <typename IType>
 struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     constexpr int index = 0;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
          ++i1) {
@@ -542,8 +547,9 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     constexpr int index = 0;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
          ++i1) {
@@ -557,8 +563,9 @@ template <typename IType>
 struct Loop_Type<2, IType, /*LayoutLeft*/ true, void, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     constexpr int index = 1;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
          ++i1) {
@@ -568,8 +575,9 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, void, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     constexpr int index = 1;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
          ++i1) {
@@ -583,8 +591,9 @@ template <typename IType, typename Tagged>
 struct Loop_Type<2, IType, /*LayoutRight*/ false, Tagged, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 2 right" << std::endl;
     constexpr int index = 0;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
@@ -596,8 +605,9 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, Tagged, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 2 right" << std::endl;
     constexpr int index = 0;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
@@ -613,8 +623,9 @@ template <typename IType, typename Tagged>
 struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 2 left" << std::endl;
     constexpr int index = 1;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
@@ -626,8 +637,9 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
 
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 2 left" << std::endl;
     constexpr int index = 1;
     for (IType i1 = (IType)lower[index]; i1 < static_cast<IType>(upper[index]);
@@ -642,8 +654,9 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
 template <typename IType>
 struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 3 right" << std::endl;
     constexpr int index = 0;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -653,8 +666,9 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 3 right" << std::endl;
     constexpr int index = 0;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -668,8 +682,9 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
 template <typename IType>
 struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 3 left" << std::endl;
     constexpr int index = 2;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -679,8 +694,9 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 3 left" << std::endl;
     constexpr int index = 2;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -694,8 +710,9 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 3 right" << std::endl;
     constexpr int index = 0;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -706,8 +723,9 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 3 right" << std::endl;
     constexpr int index = 0;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -722,8 +740,9 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 3 left" << std::endl;
     constexpr int index = 2;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -734,8 +753,9 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 3 left" << std::endl;
     constexpr int index = 2;
     for (IType i2 = (IType)lower[index]; i2 < static_cast<IType>(upper[index]);
@@ -750,8 +770,9 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
 template <typename IType>
 struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 4 right" << std::endl;
     constexpr int index = 0;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -761,8 +782,9 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 4 right" << std::endl;
     constexpr int index = 0;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -776,8 +798,9 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
 template <typename IType>
 struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 4 left" << std::endl;
     constexpr int index = 3;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -787,8 +810,9 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 4 left" << std::endl;
     constexpr int index = 3;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -802,8 +826,9 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 4 right" << std::endl;
     constexpr int index = 0;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -814,8 +839,9 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 4 right" << std::endl;
     constexpr int index = 0;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -830,8 +856,9 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 4 left" << std::endl;
     constexpr int index = 3;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -842,8 +869,9 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 4 left" << std::endl;
     constexpr int index = 3;
     for (IType i3 = (IType)lower[index]; i3 < static_cast<IType>(upper[index]);
@@ -858,8 +886,9 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
 template <typename IType>
 struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 5 right" << std::endl;
     constexpr int index = 0;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -869,8 +898,9 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 5 right" << std::endl;
     constexpr int index = 0;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -884,8 +914,9 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
 template <typename IType>
 struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 5 left" << std::endl;
     constexpr int index = 4;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -895,8 +926,9 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 5 left" << std::endl;
     constexpr int index = 4;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -910,8 +942,9 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 5 right" << std::endl;
     constexpr int index = 0;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -922,8 +955,9 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 5 right" << std::endl;
     constexpr int index = 0;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -938,8 +972,9 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 5 left" << std::endl;
     constexpr int index = 4;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -950,8 +985,9 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 5 left" << std::endl;
     constexpr int index = 4;
     for (IType i4 = (IType)lower[index]; i4 < static_cast<IType>(upper[index]);
@@ -966,8 +1002,9 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
 template <typename IType>
 struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 6 right" << std::endl;
     constexpr int index = 0;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -977,8 +1014,9 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 6 right" << std::endl;
     constexpr int index = 0;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -992,8 +1030,9 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
 template <typename IType>
 struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "para Rank 6 left" << std::endl;
     constexpr int index = 5;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -1003,8 +1042,9 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "Rank 6 left" << std::endl;
     constexpr int index = 5;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -1018,8 +1058,9 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 6 right" << std::endl;
     constexpr int index = 0;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -1030,8 +1071,9 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 6 right" << std::endl;
     constexpr int index = 0;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -1046,8 +1088,9 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
 template <typename IType, typename Tagged>
 struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
   template <typename Func, typename LoopBoundType>
-  static void apply(Func const& func, const LoopBoundType& lower,
-                    const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "parallel tag Rank 6 left" << std::endl;
     constexpr int index = 5;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
@@ -1058,8 +1101,9 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
   }
 
   template <typename ValType, typename Func, typename LoopBoundType>
-  static void apply(ValType& value, Func const& func,
-                    const LoopBoundType& lower, const LoopBoundType& upper) {
+  __attribute__((noinline, annotate("findscop"))) static void apply(
+      ValType& value, Func const& func, const LoopBoundType& lower,
+      const LoopBoundType& upper) {
     std::cout << "reduce tag Rank 6 left" << std::endl;
     constexpr int index = 5;
     for (IType i5 = (IType)lower[index]; i5 < static_cast<IType>(upper[index]);
