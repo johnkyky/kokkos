@@ -14,26 +14,25 @@
 //
 //@HEADER
 
-#include <cstdio>
-#include <sstream>
 #include <iostream>
+#include <hip/hip_runtime_api.h>
 
-#include <Kokkos_Core.hpp>
+int main() {
+  hipDeviceProp_t hipProp;
+  hipError_t error = hipGetDeviceProperties(&hipProp, 0);
 
-namespace Test {
-TEST(TEST_CATEGORY, init) { ; }
-
-template <class ExecSpace>
-void test_dispatch() {
-  const int repeat = 100;
-  for (int i = 0; i < repeat; ++i) {
-    for (int j = 0; j < repeat; ++j) {
-      Kokkos::parallel_for(Kokkos::RangePolicy<TEST_EXECSPACE>(0, j),
-                           KOKKOS_LAMBDA(int){});
-    }
+  if (error != hipSuccess) {
+    std::cout << hipGetErrorString(error) << '\n';
+    return error;
   }
+
+  if (hipProp.integrated == 1) {
+    // We detected an APU
+    std::cout << "ON";
+  } else {
+    // We detected a discrete GPU
+    std::cout << "OFF";
+  }
+
+  return 0;
 }
-
-TEST(TEST_CATEGORY, dispatch) { test_dispatch<TEST_EXECSPACE>(); }
-
-}  // namespace Test

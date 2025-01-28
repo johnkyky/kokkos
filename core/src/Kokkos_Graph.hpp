@@ -97,6 +97,10 @@ struct [[nodiscard]] Graph {
   }
 
   void submit() const { submit(get_execution_space()); }
+
+  decltype(auto) native_graph();
+
+  decltype(auto) native_graph_exec();
 };
 
 // </editor-fold> end Graph }}}1
@@ -168,6 +172,42 @@ create_graph(Closure&& arg_closure) {
 // </editor-fold> end create_graph }}}1
 //==============================================================================
 
+template <class ExecutionSpace>
+decltype(auto) Graph<ExecutionSpace>::native_graph() {
+  KOKKOS_EXPECTS(bool(m_impl_ptr));
+#if defined(KOKKOS_ENABLE_CUDA)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::Cuda>) {
+    return m_impl_ptr->cuda_graph();
+  }
+#elif defined(KOKKOS_ENABLE_HIP) && defined(KOKKOS_IMPL_HIP_NATIVE_GRAPH)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::HIP>) {
+    return m_impl_ptr->hip_graph();
+  }
+#elif defined(KOKKOS_ENABLE_SYCL) && defined(SYCL_EXT_ONEAPI_GRAPH)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::SYCL>) {
+    return m_impl_ptr->sycl_graph();
+  }
+#endif
+}
+
+template <class ExecutionSpace>
+decltype(auto) Graph<ExecutionSpace>::native_graph_exec() {
+  KOKKOS_EXPECTS(bool(m_impl_ptr));
+#if defined(KOKKOS_ENABLE_CUDA)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::Cuda>) {
+    return m_impl_ptr->cuda_graph_exec();
+  }
+#elif defined(KOKKOS_ENABLE_HIP) && defined(KOKKOS_IMPL_HIP_NATIVE_GRAPH)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::HIP>) {
+    return m_impl_ptr->hip_graph_exec();
+  }
+#elif defined(KOKKOS_ENABLE_SYCL) && defined(SYCL_EXT_ONEAPI_GRAPH)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::SYCL>) {
+    return m_impl_ptr->sycl_graph_exec();
+  }
+#endif
+}
+
 }  // end namespace Experimental
 }  // namespace Kokkos
 
@@ -176,6 +216,7 @@ create_graph(Closure&& arg_closure) {
 #include <Kokkos_GraphNode.hpp>
 
 #include <impl/Kokkos_GraphNodeImpl.hpp>
+#include <impl/Kokkos_GraphNodeThenImpl.hpp>
 #include <impl/Kokkos_Default_Graph_Impl.hpp>
 #include <Cuda/Kokkos_Cuda_Graph_Impl.hpp>
 #if defined(KOKKOS_ENABLE_HIP)

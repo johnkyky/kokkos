@@ -32,12 +32,10 @@ static_assert(false,
 #include <Kokkos_MemoryTraits.hpp>
 #include <Kokkos_Parallel.hpp>
 #include <Kokkos_ScratchSpace.hpp>
-#include <Kokkos_TaskScheduler.hpp>
 #include <impl/Kokkos_ConcurrentBitset.hpp>
 #include <impl/Kokkos_FunctorAnalysis.hpp>
 #include <impl/Kokkos_HostSharedPtr.hpp>
 #include <impl/Kokkos_Tools.hpp>
-#include <impl/Kokkos_TaskQueue.hpp>
 #include <impl/Kokkos_InitializationSettings.hpp>
 
 #include <KokkosExp_MDRangePolicy.hpp>
@@ -2023,7 +2021,7 @@ KOKKOS_INLINE_FUNCTION void parallel_scan(
   using closure_value_type = typename Kokkos::Impl::FunctorAnalysis<
       Kokkos::Impl::FunctorPatternInterface::SCAN, void, FunctorType,
       void>::value_type;
-  static_assert(std::is_same<closure_value_type, ValueType>::value,
+  static_assert(std::is_same_v<closure_value_type, ValueType>,
                 "Non-matching value types of closure and return type");
 
   ValueType accum;
@@ -2062,7 +2060,9 @@ KOKKOS_INLINE_FUNCTION void single(
 
 }  // namespace Kokkos
 
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
 #include <HPX/Kokkos_HPX_Task.hpp>
+#endif
 
 #endif /* #if defined( KOKKOS_ENABLE_HPX ) */
 #endif /* #ifndef KOKKOS_HPX_HPP */

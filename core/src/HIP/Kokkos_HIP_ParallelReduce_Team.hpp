@@ -103,13 +103,13 @@ class ParallelReduce<CombinedFunctorReducerType,
   const size_type m_vector_size;
 
   template <class TagType>
-  __device__ inline std::enable_if_t<std::is_void<TagType>::value> exec_team(
+  __device__ inline std::enable_if_t<std::is_void_v<TagType>> exec_team(
       member_type const& member, reference_type update) const {
     m_functor_reducer.get_functor()(member, update);
   }
 
   template <class TagType>
-  __device__ inline std::enable_if_t<!std::is_void<TagType>::value> exec_team(
+  __device__ inline std::enable_if_t<!std::is_void_v<TagType>> exec_team(
       member_type const& member, reference_type update) const {
     m_functor_reducer.get_functor()(TagType(), member, update);
   }
@@ -325,11 +325,15 @@ class ParallelReduce<CombinedFunctorReducerType,
         m_vector_size(arg_policy.impl_vector_length()) {
     auto internal_space_instance =
         m_policy.space().impl_internal_space_instance();
-    m_team_size = m_team_size >= 0 ? m_team_size
-                                   : arg_policy.team_size_recommended(
-                                         arg_functor_reducer.get_functor(),
-                                         arg_functor_reducer.get_reducer(),
-                                         ParallelReduceTag());
+    if (m_team_size < 0) {
+      m_team_size = arg_policy.team_size_recommended(
+          arg_functor_reducer.get_functor(), arg_functor_reducer.get_reducer(),
+          ParallelReduceTag());
+      if (m_team_size <= 0)
+        Kokkos::Impl::throw_runtime_exception(
+            "Kokkos::Impl::ParallelReduce<HIP, TeamPolicy> could not find a "
+            "valid execution configuration.");
+    }
 
     m_team_begin =
         UseShflReduction
