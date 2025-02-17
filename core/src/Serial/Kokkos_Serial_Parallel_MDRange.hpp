@@ -38,6 +38,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
   template <bool Polly>
   std::enable_if_t<Polly> exec() const {
+    // std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
         MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
         iter(m_iter.m_rp, m_iter.m_func);

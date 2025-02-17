@@ -1368,7 +1368,7 @@ struct HostIterate<RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   inline void operator()() const {
-    std::cout << "HostIterate ParallelFor" << std::endl;
+    // std::cout << "HostIterate ParallelFor" << std::endl;
     Loop_Type<RP::rank, index_type, (RP::inner_direction == Iterate::Left),
               Tag>::apply(m_func, m_rp.m_lower, m_rp.m_upper);
   }
