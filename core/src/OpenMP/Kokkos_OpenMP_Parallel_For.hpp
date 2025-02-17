@@ -20,6 +20,7 @@
 #include <omp.h>
 #include <OpenMP/Kokkos_OpenMP_Instance.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
+#include <impl/KokkosExp_Host_Iterate.hpp>
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -51,8 +52,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   const FunctorType m_functor;
   const Policy m_policy;
 
-  inline static void exec_range(const FunctorType& functor, const Member ibeg,
-                                const Member iend) {
+  __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
+      const FunctorType& functor, const Member ibeg, const Member iend) {
     KOKKOS_PRAGMA_IVDEP_IF_ENABLED
     for (auto iwork = ibeg; iwork < iend; ++iwork) {
       exec_work(functor, iwork);
@@ -101,9 +102,14 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
+    if constexpr (Polly) {
+      exec_range(m_functor, m_policy.begin(), m_policy.end());
+      return;
+    }
     if (execute_in_serial(m_policy.space())) {
       exec_range(m_functor, m_policy.begin(), m_policy.end());
       return;
@@ -197,10 +203,18 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
 
+    if constexpr (Polly) {
+      const typename Kokkos::Impl::HostIterate<
+          MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+          iter(m_iter.m_rp, m_iter.m_func);
+      iter();
+      return;
+    }
 #ifndef KOKKOS_COMPILER_INTEL
     if (execute_in_serial(m_iter.m_rp.space())) {
       exec_range(0, m_iter.m_rp.m_num_tiles);
@@ -324,7 +338,13 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
+    if constexpr (Polly) {
+      throw std::runtime_error(
+          "Polly is not supported for TeamPolicy with OMP backend");
+    }
+
     enum { is_dynamic = std::is_same_v<SchedTag, Kokkos::Dynamic> };
 
     const size_t pool_reduce_size  = 0;  // Never shrinks
