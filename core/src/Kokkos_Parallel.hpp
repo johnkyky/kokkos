@@ -105,6 +105,13 @@ struct FunctorPolicyExecutionSpace {
 //----------------------------------------------------------------------------
 
 namespace Kokkos {
+constexpr bool usePolyOpt = true;
+}
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+namespace Kokkos {
 
 /** \brief Execute \c functor in parallel according to the execution \c policy.
  *
@@ -172,6 +179,53 @@ inline void parallel_for(const size_t work_count, const FunctorType& functor) {
   ::Kokkos::parallel_for<Polly>("", work_count, functor);
 }
 
+// template <class FunctorType1>
+// __attribute__((noinline, annotate("multi_parallel_for"))) void
+// call_for_multi_parallel_for(FunctorType1 f1) {
+//   f1();
+// }
+// template <
+//     bool Polly    = false, class ExecPolicy1, class FunctorType1,
+//     class Enable1 =
+//     std::enable_if_t<is_execution_policy<ExecPolicy1>::value>>
+// inline void multi_parallel_for(const std::string& str,
+//                                const ExecPolicy1& policy1,
+//                                const FunctorType1& functor1) {
+//   auto closure1 =
+//       Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
+//           Impl::ParallelFor<FunctorType1, ExecPolicy1>>(functor1, policy1);
+//   auto f1 = closure1.template getExecute<Polly>();
+//   call_for_multi_parallel_for(f1);
+// }
+
+template <class FunctorType1, class FunctorType2>
+__attribute__((noinline, annotate("multi_parallel_for"))) void
+call_for_multi_parallel_for(FunctorType1 f1, FunctorType2 f2) {
+  f1();
+  f2();
+}
+template <
+    bool Polly    = false, class ExecPolicy1, class FunctorType1,
+    class Enable1 = std::enable_if_t<is_execution_policy<ExecPolicy1>::value>,
+    class ExecPolicy2, class FunctorType2,
+    class Enable2 = std::enable_if_t<is_execution_policy<ExecPolicy2>::value>>
+inline void multi_parallel_for(const std::string& str,
+                               const ExecPolicy1& policy1,
+                               const FunctorType1& functor1,
+                               const ExecPolicy2& policy2,
+                               const FunctorType2& functor2) {
+  auto closure1 =
+      Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
+          Impl::ParallelFor<FunctorType1, ExecPolicy1>>(functor1, policy1);
+  auto closure2 =
+      Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
+          Impl::ParallelFor<FunctorType2, ExecPolicy2>>(functor2, policy2);
+  auto f1 = closure1.template getExecute<Polly>();
+  auto f2 = closure2.template getExecute<Polly>();
+
+  using IType = typename ExecPolicy1::index_type;
+  call_for_multi_parallel_for(f1, f2);
+}
 }  // namespace Kokkos
 
 #include <Kokkos_Parallel_Reduce.hpp>

@@ -47,6 +47,15 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
   template <bool Polly>
+  auto getExec() const {
+    std::cerr << "ENABLE POLLY" << std::endl;
+    const typename Kokkos::Impl::HostIterate<
+        MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+        iter(m_iter.m_rp, m_iter.m_func);
+    return iter.getHostIterateFunction();
+  }
+
+  template <bool Polly>
   std::enable_if_t<!Polly> exec() const {
     const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
     for (typename Policy::member_type i = 0; i < e; ++i) {
@@ -55,6 +64,11 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
  public:
+  template <bool Polly>
+  inline auto getExecute() const {
+    return this->getExec<Polly>();
+  }
+
   template <bool Polly>
   inline void execute() const {
     // caused a possibly codegen-related slowdown, especially in GCC 9-11

@@ -525,6 +525,22 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
     }
   }
 
+  template <typename Func, typename LoopBoundType>
+  __attribute__((noinline)) static auto getApply(Func const& func,
+                                                 const LoopBoundType& lower,
+                                                 const LoopBoundType& upper) {
+    const IType l1 = (IType)lower[0];
+    const IType u1 = static_cast<IType>(upper[0]);
+    const IType l0 = (IType)lower[1];
+    const IType u0 = static_cast<IType>(upper[1]);
+    auto lambda    = [=]() -> void {
+      for (IType i1 = l1; i1 < u1; ++i1) {
+        KOKKOS_IMPL_LOOP_1R(func, IType, l0, u0, i1)
+      }
+    };
+    return lambda;
+  }
+
   /* ParallelReduce */
   template <typename ValType, typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
@@ -1371,6 +1387,12 @@ struct HostIterate<RP, Functor, Tag, ValueType,
     // std::cout << "HostIterate ParallelFor" << std::endl;
     Loop_Type<RP::rank, index_type, (RP::inner_direction == Iterate::Left),
               Tag>::apply(m_func, m_rp.m_lower, m_rp.m_upper);
+  }
+
+  auto getHostIterateFunction(/*RP const& rp, Functor const& func*/) const {
+    return Loop_Type<RP::rank, index_type,
+                     (RP::inner_direction == Iterate::Left),
+                     Tag>::getApply(m_func, m_rp.m_lower, m_rp.m_upper);
   }
 
   RP const m_rp;
