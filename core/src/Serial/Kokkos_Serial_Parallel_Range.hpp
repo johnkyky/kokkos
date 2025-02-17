@@ -35,7 +35,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   __attribute__((noinline, annotate("findscop")))
   std::enable_if_t<std::is_void_v<TagType> and Polly>
   exec() const {
-    std::cerr << "ENABLE POLLY" << std::endl;
+    // std::cerr << "ENABLE POLLY" << std::endl;
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
       m_functor(i);
@@ -54,7 +54,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   __attribute__((noinline, annotate("findscop")))
   std::enable_if_t<!std::is_void_v<TagType> and Polly>
   exec() const {
-    std::cerr << "ENABLE POLLY" << std::endl;
+    // std::cerr << "ENABLE POLLY" << std::endl;
     const TagType t{};
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
