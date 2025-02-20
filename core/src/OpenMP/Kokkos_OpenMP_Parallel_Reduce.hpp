@@ -66,6 +66,7 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
     const ReducerType& reducer = m_functor_reducer.get_reducer();
 
@@ -214,6 +215,7 @@ class ParallelReduce<CombinedFunctorReducerType,
   }
 
  public:
+  template <bool Polly = false>
   inline void execute() const {
     const ReducerType& reducer     = m_iter.m_func.get_reducer();
     const size_t pool_reduce_bytes = reducer.value_size();
