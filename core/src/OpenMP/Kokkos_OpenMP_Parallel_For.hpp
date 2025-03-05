@@ -53,9 +53,10 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   const Policy m_policy;
 
   __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
-      const FunctorType& functor, const Member ibeg, const Member iend) {
+      const FunctorType& functor, const Policy policy) {
+    const Member e = policy.end();
     KOKKOS_PRAGMA_IVDEP_IF_ENABLED
-    for (auto iwork = ibeg; iwork < iend; ++iwork) {
+    for (auto iwork = policy.begin(); iwork < e; ++iwork) {
       exec_work(functor, iwork);
     }
   }
@@ -107,11 +108,11 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
     if constexpr (Polly) {
-      exec_range(m_functor, m_policy.begin(), m_policy.end());
+      exec_range(m_functor, m_policy);
       return;
     }
     if (execute_in_serial(m_policy.space())) {
-      exec_range(m_functor, m_policy.begin(), m_policy.end());
+      exec_range(m_functor, m_policy);
       return;
     }
 
