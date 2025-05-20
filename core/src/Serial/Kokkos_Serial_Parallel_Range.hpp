@@ -31,18 +31,23 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   const FunctorType m_functor;
   const Policy m_policy;
 
-  template <class TagType, bool Polly>
+  template <class TagType, bool Polly, StringAssumption StrAssumption>
   __attribute__((noinline, annotate("findscop")))
   std::enable_if_t<std::is_void_v<TagType> and Polly>
   exec() const {
     // std::cerr << "ENABLE POLLY" << std::endl;
-    const typename Policy::member_type e = m_policy.end();
-    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+    const typename Policy::member_type l0 = m_policy.begin();
+    __builtin_annotation(l0, StrAssumption.value);
+    const typename Policy::member_type u0 = m_policy.end();
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u0, "upper bound 0");
+    for (typename Policy::member_type i = l0; i < u0; ++i) {
       m_functor(i);
     }
   }
 
-  template <class TagType, bool Polly>
+  template <class TagType, bool Polly, StringAssumption StrAssumption>
   std::enable_if_t<std::is_void_v<TagType> and !Polly> exec() const {
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
@@ -50,19 +55,23 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     }
   }
 
-  template <class TagType, bool Polly>
+  template <class TagType, bool Polly, StringAssumption StrAssumption>
   __attribute__((noinline, annotate("findscop")))
   std::enable_if_t<!std::is_void_v<TagType> and Polly>
   exec() const {
-    // std::cerr << "ENABLE POLLY" << std::endl;
     const TagType t{};
-    const typename Policy::member_type e = m_policy.end();
-    for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
+    // std::cerr << "ENABLE POLLY" << std::endl;
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+    const typename Policy::member_type l0 = m_policy.begin();
+    const typename Policy::member_type u0 = m_policy.end();
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u0, "upper bound 0");
+    for (typename Policy::member_type i = l0; i < u0; ++i) {
       m_functor(t, i);
     }
   }
 
-  template <class TagType, bool Polly>
+  template <class TagType, bool Polly, StringAssumption StrAssumption>
   std::enable_if_t<!std::is_void_v<TagType> and !Polly> exec() const {
     const TagType t{};
     const typename Policy::member_type e = m_policy.end();
@@ -72,7 +81,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   }
 
  public:
-  template <bool Polly = false>
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // caused a possibly codegen-related slowdown, especially in GCC 9-11
     // with KOKKOS_ARCH_NATIVE
@@ -83,7 +92,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     auto* internal_instance = m_policy.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->template exec<typename Policy::work_tag, Polly>();
+    this->template exec<typename Policy::work_tag, Polly, StrAssumption>();
   }
 
   inline ParallelFor(const FunctorType& arg_functor, const Policy& arg_policy)

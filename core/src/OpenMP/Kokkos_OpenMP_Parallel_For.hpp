@@ -52,11 +52,16 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   const FunctorType m_functor;
   const Policy m_policy;
 
+  template <StringAssumption StrAssumption>
   __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
       const FunctorType& functor, const Policy policy) {
-    const Member e = policy.end();
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+    const Member l0 = policy.begin();
+    const Member u0 = policy.end();
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u0, "upper bound 0");
     KOKKOS_PRAGMA_IVDEP_IF_ENABLED
-    for (auto iwork = policy.begin(); iwork < e; ++iwork) {
+    for (auto iwork = l0; iwork < u0; ++iwork) {
       exec_work(functor, iwork);
     }
   }
@@ -103,16 +108,16 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   }
 
  public:
-  template <bool Polly = false>
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
     if constexpr (Polly) {
-      exec_range(m_functor, m_policy);
+      exec_range<StrAssumption>(m_functor, m_policy);
       return;
     }
     if (execute_in_serial(m_policy.space())) {
-      exec_range(m_functor, m_policy);
+      exec_range<StrAssumption>(m_functor, m_policy);
       return;
     }
 
@@ -204,14 +209,15 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
  public:
-  template <bool Polly = false>
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
 
     if constexpr (Polly) {
       const typename Kokkos::Impl::HostIterate<
-          MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+          StrAssumption, MDRangePolicy, FunctorType,
+          typename MDRangePolicy::work_tag, void>
           iter(m_iter.m_rp, m_iter.m_func);
       iter();
       return;
@@ -339,7 +345,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
   }
 
  public:
-  template <bool Polly = false>
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     if constexpr (Polly) {
       throw std::runtime_error(

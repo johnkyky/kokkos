@@ -113,6 +113,14 @@ constexpr bool usePolyOpt = true;
 
 namespace Kokkos {
 
+template <std::size_t N>
+struct StringAssumption {
+  constexpr StringAssumption(const char (&str)[N]) {
+    std::copy_n(str, N, value);
+  }
+  char value[N];
+};
+
 /** \brief Execute \c functor in parallel according to the execution \c policy.
  *
  * A "functor" is a class containing the function to execute in parallel,
@@ -135,7 +143,8 @@ namespace Kokkos {
  * If \c execution_space is not defined DefaultExecutionSpace will be used.
  */
 template <
-    bool Polly   = false, class ExecPolicy, class FunctorType,
+    bool Polly = false, StringAssumption StrAssumption = "", class ExecPolicy,
+    class FunctorType,
     class Enable = std::enable_if_t<is_execution_policy<ExecPolicy>::value>>
 inline void parallel_for(const std::string& str, const ExecPolicy& policy,
                          const FunctorType& functor) {
@@ -150,19 +159,21 @@ inline void parallel_for(const std::string& str, const ExecPolicy& policy,
       Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
           Impl::ParallelFor<FunctorType, ExecPolicy>>(functor, inner_policy);
 
-  closure.template execute<Polly>();
+  closure.template execute<Polly, StrAssumption>();
 
   Kokkos::Tools::Impl::end_parallel_for(inner_policy, functor, str, kpID);
 }
 
-template <bool Polly = false, class ExecPolicy, class FunctorType>
+template <bool Polly = false, StringAssumption StrAssumption = "",
+          class ExecPolicy, class FunctorType>
 inline void parallel_for(
     const ExecPolicy& policy, const FunctorType& functor,
     std::enable_if_t<is_execution_policy<ExecPolicy>::value>* = nullptr) {
   Kokkos::parallel_for<Polly>("", policy, functor);
 }
 
-template <bool Polly = false, class FunctorType>
+template <bool Polly = false, StringAssumption StrAssumption = "",
+          class FunctorType>
 inline void parallel_for(const std::string& str, const size_t work_count,
                          const FunctorType& functor) {
   using execution_space =
@@ -174,7 +185,8 @@ inline void parallel_for(const std::string& str, const size_t work_count,
   ::Kokkos::parallel_for<Polly>(str, execution_policy, functor);
 }
 
-template <bool Polly = false, class FunctorType>
+template <bool Polly = false, StringAssumption StrAssumption = "",
+          class FunctorType>
 inline void parallel_for(const size_t work_count, const FunctorType& functor) {
   ::Kokkos::parallel_for<Polly>("", work_count, functor);
 }
@@ -205,7 +217,8 @@ call_for_multi_parallel_for(FunctorType1 f1, FunctorType2 f2) {
   f2();
 }
 template <
-    bool Polly    = false, class ExecPolicy1, class FunctorType1,
+    bool Polly = false, StringAssumption StrAssumption = "", class ExecPolicy1,
+    class FunctorType1,
     class Enable1 = std::enable_if_t<is_execution_policy<ExecPolicy1>::value>,
     class ExecPolicy2, class FunctorType2,
     class Enable2 = std::enable_if_t<is_execution_policy<ExecPolicy2>::value>>
@@ -220,8 +233,8 @@ inline void multi_parallel_for(const std::string& str,
   auto closure2 =
       Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
           Impl::ParallelFor<FunctorType2, ExecPolicy2>>(functor2, policy2);
-  auto f1 = closure1.template getExecute<Polly>();
-  auto f2 = closure2.template getExecute<Polly>();
+  auto f1 = closure1.template getExecute<Polly, StrAssumption>();
+  auto f2 = closure2.template getExecute<Polly, StrAssumption>();
 
   using IType = typename ExecPolicy1::index_type;
   call_for_multi_parallel_for(f1, f2);

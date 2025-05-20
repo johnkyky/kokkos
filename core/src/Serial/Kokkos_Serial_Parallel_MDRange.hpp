@@ -36,26 +36,28 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
   const iterate_type m_iter;
 
-  template <bool Polly>
+  template <bool Polly, StringAssumption StrAssumption>
   std::enable_if_t<Polly> exec() const {
     // std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
-        MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+        StrAssumption, MDRangePolicy, FunctorType,
+        typename MDRangePolicy::work_tag, void>
         iter(m_iter.m_rp, m_iter.m_func);
 
     iter();
   }
 
-  template <bool Polly>
+  template <bool Polly, StringAssumption StrAssumption>
   auto getExec() const {
     std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
-        MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>
+        StrAssumption, MDRangePolicy, FunctorType,
+        typename MDRangePolicy::work_tag, void>
         iter(m_iter.m_rp, m_iter.m_func);
     return iter.getHostIterateFunction();
   }
 
-  template <bool Polly>
+  template <bool Polly, StringAssumption StrAssumption>
   std::enable_if_t<!Polly> exec() const {
     const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
     for (typename Policy::member_type i = 0; i < e; ++i) {
@@ -64,12 +66,12 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
 
  public:
-  template <bool Polly>
+  template <bool Polly, StringAssumption StrAssumption>
   inline auto getExecute() const {
-    return this->getExec<Polly>();
+    return this->getExec<Polly, StrAssumption>();
   }
 
-  template <bool Polly>
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // caused a possibly codegen-related slowdown, especially in GCC 9-11
     // with KOKKOS_ARCH_NATIVE
@@ -81,7 +83,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
         m_iter.m_rp.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->exec<Polly>();
+    this->exec<Polly, StrAssumption>();
   }
   template <typename Policy, typename Functor>
   static int max_tile_size_product(const Policy&, const Functor&) {
@@ -120,7 +122,7 @@ class ParallelReduce<CombinedFunctorReducerType,
   template <bool Polly>
   inline std::enable_if_t<Polly> exec(reference_type update) const {
     std::cerr << "Polly c" << std::endl;
-    Kokkos::Impl::HostIterate<MDRangePolicy, CombinedFunctorReducerType,
+    Kokkos::Impl::HostIterate<"", MDRangePolicy, CombinedFunctorReducerType,
                               WorkTag, reference_type>
         iter(m_iter.m_rp, m_iter.m_func);
 

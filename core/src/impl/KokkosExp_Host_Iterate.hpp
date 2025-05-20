@@ -443,82 +443,27 @@ namespace Impl {
 // ------------------------------------------------------------------ //
 
 /* Structs for calling loops */
-template <int Rank, typename IType, bool IsLeft, typename Tagged,
-          typename Enable = void>
+template <StringAssumption StrAssumption, int Rank, typename IType, bool IsLeft,
+          typename Tagged>
 struct Loop_Type;
 
-// Rank = 1 non taggged
-// template <typename IType, bool IsLeft>
-// struct Loop_Type<1, IType, IsLeft, void, void> {
-//   /* ParallelFor */
-//   template <typename Func, typename LoopBoundType>
-//   __attribute__((noinline, annotate("findscop"))) static void apply(
-//       Func const& func, const LoopBoundType& lower,
-//       const LoopBoundType& upper) {
-//     constexpr int index = 0;
-//     for (IType i0 = (IType)lower[index]; i0 <
-//     static_cast<IType>(upper[index]);
-//          ++i0) {
-//       KOKKOS_IMPL_APPLY(func, i0)
-//     }
-//   }
-//
-//   /* ParallelReduce */
-//   template <typename ValType, typename Func, typename LoopBoundType>
-//   __attribute__((noinline, annotate("findscop"))) static void apply(
-//       ValType& value, Func const& func, const LoopBoundType& lower,
-//       const LoopBoundType& upper) {
-//     constexpr int index = 0;
-//     for (IType i0 = (IType)lower[index]; i0 <
-//     static_cast<IType>(upper[index]);
-//          ++i0) {
-//       KOKKOS_IMPL_APPLY_REDUX(value, func, i0)
-//     }
-//   }
-// };
-
-// Rank = 1 tagged
-// template <typename IType, bool IsLeft, typename Tagged>
-// struct Loop_Type<1, IType, IsLeft, Tagged, void> {
-//   /* ParallelFor */
-//   template <typename Func, typename LoopBoundType>
-//   __attribute__((noinline, annotate("findscop"))) static void apply(
-//       Func const& func, const LoopBoundType& lower,
-//       const LoopBoundType& upper) {
-//     constexpr int index = 0;
-//     for (IType i0 = (IType)lower[index]; i0 <
-//     static_cast<IType>(upper[index]);
-//          ++i0) {
-//       KOKKOS_IMPL_TAGGED_APPLY(Tagged(), func, i0)
-//     }
-//   }
-//
-//   /* ParallelReduce */
-//   template <typename ValType, typename Func, typename LoopBoundType>
-//   __attribute__((noinline, annotate("findscop"))) static void apply(
-//       ValType& value, Func const& func, const LoopBoundType& lower,
-//       const LoopBoundType& upper) {
-//     constexpr int index = 0;
-//     for (IType i0 = (IType)lower[index]; i0 <
-//     static_cast<IType>(upper[index]);
-//          ++i0) {
-//       KOKKOS_IMPL_TAGGED_APPLY_REDUX(Tagged(), value, func, i0)
-//     }
-//   }
-// };
-
 // Rank = 2 non tagged Right layout
-template <typename IType>
-struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_LOOP_1R(func, IType, l0, u0, i1)
@@ -529,11 +474,16 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline)) static auto getApply(Func const& func,
                                                  const LoopBoundType& lower,
                                                  const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
-    auto lambda    = [=]() -> void {
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
+    auto lambda = [=]() -> void {
       for (IType i1 = l1; i1 < u1; ++i1) {
         KOKKOS_IMPL_LOOP_1R(func, IType, l0, u0, i1)
       }
@@ -546,10 +496,15 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_LOOP_REDUX_1R(value, func, IType, l0, u0, i1)
@@ -558,17 +513,22 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, void, void> {
 };
 
 // Rank = 2 non tagged Left layout
-template <typename IType>
-struct Loop_Type<2, IType, /*LayoutLeft*/ true, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_LOOP_1L(func, IType, l0, u0, i1)
@@ -580,10 +540,15 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_LOOP_REDUX_1L(value, func, IType, l0, u0, i1)
@@ -592,17 +557,22 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, void, void> {
 };
 
 // Rank = 2 tagged Right layout
-template <typename IType, typename Tagged>
-struct Loop_Type<2, IType, /*LayoutRight*/ false, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, Tagged> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_TAGGED_LOOP_1R(Tagged(), func, IType, l0, u0, i1)
@@ -614,10 +584,15 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_1R(Tagged(), value, func, IType, l0, u0, i1)
@@ -626,17 +601,22 @@ struct Loop_Type<2, IType, /*LayoutRight*/ false, Tagged, void> {
 };
 
 // Rank = 2 tagged Left layout
-template <typename IType, typename Tagged>
-struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, Tagged> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_TAGGED_LOOP_1L(Tagged(), func, IType, l0, u0, i1)
@@ -648,10 +628,15 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i1 = l1; i1 < u1; ++i1) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_1L(Tagged(), value, func, IType, l0, u0, i1)
@@ -660,18 +645,25 @@ struct Loop_Type<2, IType, /*LayoutLeft*/ true, Tagged, void> {
 };
 
 // Rank = 3 non tagged Right layout
-template <typename IType>
-struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[2];
     const IType u0 = static_cast<IType>(upper[2]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_LOOP_2R(func, IType, l1, l0, u1, u0, i2)
@@ -682,12 +674,19 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[2];
     const IType u0 = static_cast<IType>(upper[2]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_LOOP_REDUX_2R(value, func, IType, l1, l0, u1, u0, i2)
@@ -696,18 +695,25 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, void, void> {
 };
 
 // Rank = 3 non tagged Left layout
-template <typename IType>
-struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_LOOP_2L(func, IType, l1, l0, u1, u0, i2)
@@ -718,12 +724,19 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_LOOP_REDUX_2L(value, func, IType, l1, l0, u1, u0, i2)
@@ -732,18 +745,25 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, void, void> {
 };
 
 // Rank = 3 tagged Right layout
-template <typename IType, typename Tagged>
-struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[2];
     const IType u0 = static_cast<IType>(upper[2]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_TAGGED_LOOP_2R(Tagged(), func, IType, l1, l0, u1, u0, i2)
@@ -754,13 +774,19 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
-    constexpr int index = 0;
-    const IType l2      = (IType)lower[0];
-    const IType u2      = static_cast<IType>(upper[0]);
-    const IType l1      = (IType)lower[1];
-    const IType u1      = static_cast<IType>(upper[1]);
-    const IType l0      = (IType)lower[2];
-    const IType u0      = static_cast<IType>(upper[2]);
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+    const IType l2 = (IType)lower[0];
+    const IType u2 = static_cast<IType>(upper[0]);
+    const IType l1 = (IType)lower[1];
+    const IType u1 = static_cast<IType>(upper[1]);
+    const IType l0 = (IType)lower[2];
+    const IType u0 = static_cast<IType>(upper[2]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_2R(Tagged(), value, func, IType, l1, l0, u1,
@@ -770,18 +796,25 @@ struct Loop_Type<3, IType, /*LayoutRight*/ false, Tagged, void> {
 };
 
 // Rank = 3 tagged Left layout
-template <typename IType, typename Tagged>
-struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_TAGGED_LOOP_2L(Tagged(), func, IType, l1, l0, u1, u0, i2)
@@ -792,12 +825,19 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i2 = l2; i2 < u2; ++i2) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_2L(Tagged(), value, func, IType, l1, l0, u1,
@@ -807,12 +847,13 @@ struct Loop_Type<3, IType, /*LayoutLeft*/ true, Tagged, void> {
 };
 
 // Rank = 4 non tagged Right layout
-template <typename IType>
-struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
     const IType l2 = (IType)lower[1];
@@ -821,6 +862,12 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[2]);
     const IType l0 = (IType)lower[3];
     const IType u0 = static_cast<IType>(upper[3]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_LOOP_3R(func, IType, l2, l1, l0, u2, u1, u0, i3)
@@ -831,6 +878,7 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
     const IType l2 = (IType)lower[1];
@@ -839,6 +887,12 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[2]);
     const IType l0 = (IType)lower[3];
     const IType u0 = static_cast<IType>(upper[3]);
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_LOOP_REDUX_3R(value, func, IType, l2, l1, l0, u2, u1, u0, i3)
@@ -847,12 +901,13 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, void, void> {
 };
 
 // Rank = 4 non tagged Left layout
-template <typename IType>
-struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
     const IType l2 = (IType)lower[2];
@@ -861,6 +916,14 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_LOOP_3L(func, IType, l2, l1, l0, u2, u1, u0, i3)
@@ -871,6 +934,7 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
     const IType l2 = (IType)lower[2];
@@ -879,6 +943,14 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_LOOP_REDUX_3L(value, func, IType, l2, l1, l0, u2, u1, u0, i3)
@@ -887,12 +959,13 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, void, void> {
 };
 
 // Rank = 4 tagged Right layout
-template <typename IType, typename Tagged>
-struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
     const IType l2 = (IType)lower[1];
@@ -901,6 +974,14 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[2]);
     const IType l0 = (IType)lower[3];
     const IType u0 = static_cast<IType>(upper[3]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_TAGGED_LOOP_3R(Tagged(), func, IType, l2, l1, l0, u2, u1, u0,
@@ -912,6 +993,7 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
     const IType l2 = (IType)lower[1];
@@ -920,6 +1002,14 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[2]);
     const IType l0 = (IType)lower[3];
     const IType u0 = static_cast<IType>(upper[3]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_3R(Tagged(), value, func, IType, l2, l1, l0,
@@ -929,12 +1019,13 @@ struct Loop_Type<4, IType, /*LayoutRight*/ false, Tagged, void> {
 };
 
 // Rank = 4 tagged Left layout
-template <typename IType, typename Tagged>
-struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
     const IType l2 = (IType)lower[2];
@@ -943,6 +1034,14 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_TAGGED_LOOP_3L(Tagged(), func, IType, l2, l1, l0, u2, u1, u0,
@@ -954,6 +1053,7 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
     const IType l2 = (IType)lower[2];
@@ -962,6 +1062,14 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i3 = l3; i3 < u3; ++i3) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_3L(Tagged(), value, func, IType, l2, l1, l0,
@@ -971,12 +1079,13 @@ struct Loop_Type<4, IType, /*LayoutLeft*/ true, Tagged, void> {
 };
 
 // Rank = 5 non tagged Right layout
-template <typename IType>
-struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
     const IType l3 = (IType)lower[1];
@@ -987,6 +1096,16 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[3]);
     const IType l0 = (IType)lower[4];
     const IType u0 = static_cast<IType>(upper[4]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_LOOP_4R(func, IType, l3, l2, l1, l0, u3, u2, u1, u0, i4)
@@ -997,6 +1116,7 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
     const IType l3 = (IType)lower[1];
@@ -1007,6 +1127,16 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[3]);
     const IType l0 = (IType)lower[4];
     const IType u0 = static_cast<IType>(upper[4]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_LOOP_REDUX_4R(value, func, IType, l3, l2, l1, l0, u3, u2, u1,
@@ -1016,12 +1146,13 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, void, void> {
 };
 
 // Rank = 5 non tagged Left layout
-template <typename IType>
-struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
     const IType l3 = (IType)lower[3];
@@ -1032,6 +1163,16 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_LOOP_4L(func, IType, l3, l2, l1, l0, u3, u2, u1, u0, i4)
@@ -1042,6 +1183,7 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
     const IType l3 = (IType)lower[3];
@@ -1052,6 +1194,16 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_LOOP_REDUX_4L(value, func, IType, l3, l2, l1, l0, u3, u2, u1,
@@ -1061,12 +1213,13 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, void, void> {
 };
 
 // Rank = 5 tagged Right layout
-template <typename IType, typename Tagged>
-struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
     const IType l3 = (IType)lower[1];
@@ -1077,6 +1230,16 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[3]);
     const IType l0 = (IType)lower[4];
     const IType u0 = static_cast<IType>(upper[4]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_TAGGED_LOOP_4R(Tagged(), func, IType, l3, l2, l1, l0, u3, u2,
@@ -1088,6 +1251,7 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
     const IType l3 = (IType)lower[1];
@@ -1098,6 +1262,16 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[3]);
     const IType l0 = (IType)lower[4];
     const IType u0 = static_cast<IType>(upper[4]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_4R(Tagged(), value, func, IType, l3, l2, l1,
@@ -1107,12 +1281,13 @@ struct Loop_Type<5, IType, /*LayoutRight*/ false, Tagged, void> {
 };
 
 // Rank = 5 tagged Left layout
-template <typename IType, typename Tagged>
-struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
     const IType l3 = (IType)lower[3];
@@ -1123,6 +1298,16 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_TAGGED_LOOP_4L(Tagged(), func, IType, l3, l2, l1, l0, u3, u2,
@@ -1134,6 +1319,7 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
     const IType l3 = (IType)lower[3];
@@ -1144,6 +1330,16 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i4 = l4; i4 < u4; ++i4) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_4L(Tagged(), value, func, IType, l3, l2, l1,
@@ -1153,13 +1349,13 @@ struct Loop_Type<5, IType, /*LayoutLeft*/ true, Tagged, void> {
 };
 
 // Rank = 6 non tagged Right layout
-template <typename IType>
-struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
-    // std::cout << "6R" << std::endl;
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
     const IType l4 = (IType)lower[1];
@@ -1172,18 +1368,18 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[4]);
     const IType l0 = (IType)lower[5];
     const IType u0 = static_cast<IType>(upper[5]);
-    // const IType l5 = 0;
-    // const IType u5 = 500;
-    // const IType l4 = 0;
-    // const IType u4 = 500;
-    // const IType l3 = 0;
-    // const IType u3 = 500;
-    // const IType l2 = 0;
-    // const IType u2 = 500;
-    // const IType l1 = 0;
-    // const IType u1 = 500;
-    // const IType l0 = 0;
-    // const IType u0 = 500;
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_LOOP_5R(func, IType, l4, l3, l2, l1, l0, u4, u3, u2, u1, u0,
@@ -1195,6 +1391,7 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
     const IType l4 = (IType)lower[1];
@@ -1207,6 +1404,18 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
     const IType u1 = static_cast<IType>(upper[4]);
     const IType l0 = (IType)lower[5];
     const IType u0 = static_cast<IType>(upper[5]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_LOOP_REDUX_5R(value, func, IType, l4, l3, l2, l1, l0, u4, u3,
@@ -1216,12 +1425,13 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, void, void> {
 };
 
 // Rank = 6 non tagged Left layout
-template <typename IType>
-struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
+template <StringAssumption StrAssumption, typename IType>
+struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
     const IType l4 = (IType)lower[4];
@@ -1234,6 +1444,18 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_LOOP_5L(func, IType, l4, l3, l2, l1, l0, u4, u3, u2, u1, u0,
@@ -1245,6 +1467,7 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
     const IType l4 = (IType)lower[4];
@@ -1257,6 +1480,18 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_LOOP_REDUX_5L(value, func, IType, l4, l3, l2, l1, l0, u4, u3,
@@ -1266,12 +1501,13 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, void, void> {
 };
 
 // Rank = 6 tagged Right layout
-template <typename IType, typename Tagged>
-struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
     const IType l4 = (IType)lower[1];
@@ -1284,6 +1520,18 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[4]);
     const IType l0 = (IType)lower[5];
     const IType u0 = static_cast<IType>(upper[5]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_TAGGED_LOOP_5R(Tagged(), func, IType, l4, l3, l2, l1, l0, u4,
@@ -1295,6 +1543,7 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
     const IType l4 = (IType)lower[1];
@@ -1307,6 +1556,18 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[4]);
     const IType l0 = (IType)lower[5];
     const IType u0 = static_cast<IType>(upper[5]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_5R(Tagged(), value, func, IType, l4, l3, l2,
@@ -1316,12 +1577,13 @@ struct Loop_Type<6, IType, /*LayoutRight*/ false, Tagged, void> {
 };
 
 // Rank = 6 tagged Left layout
-template <typename IType, typename Tagged>
-struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
+template <StringAssumption StrAssumption, typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
     const IType l4 = (IType)lower[4];
@@ -1334,6 +1596,18 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_TAGGED_LOOP_5L(Tagged(), func, IType, l4, l3, l2, l1, l0, u4,
@@ -1345,6 +1619,7 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
     const IType l4 = (IType)lower[4];
@@ -1357,6 +1632,18 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
     const IType u1 = static_cast<IType>(upper[1]);
     const IType l0 = (IType)lower[0];
     const IType u0 = static_cast<IType>(upper[0]);
+    __builtin_annotation(l5, "lower bound 5");
+    __builtin_annotation(l4, "lower bound 4");
+    __builtin_annotation(l3, "lower bound 3");
+    __builtin_annotation(l2, "lower bound 2");
+    __builtin_annotation(l1, "lower bound 1");
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u5, "upper bound 5");
+    __builtin_annotation(u4, "upper bound 4");
+    __builtin_annotation(u3, "upper bound 3");
+    __builtin_annotation(u2, "upper bound 2");
+    __builtin_annotation(u1, "upper bound 1");
+    __builtin_annotation(u0, "upper bound 0");
 
     for (IType i5 = l5; i5 < u5; ++i5) {
       KOKKOS_IMPL_TAGGED_LOOP_REDUX_5L(Tagged(), value, func, IType, l4, l3, l2,
@@ -1367,13 +1654,15 @@ struct Loop_Type<6, IType, /*LayoutLeft*/ true, Tagged, void> {
 
 // end Structs for calling loops
 
-template <typename RP, typename Functor, typename Tag = void,
-          typename ValueType = void, typename Enable = void>
+template <StringAssumption StrAssumption, typename RP, typename Functor,
+          typename Tag = void, typename ValueType = void,
+          typename Enable = void>
 struct HostIterate;
 
 // For ParallelFor
-template <typename RP, typename Functor, typename Tag, typename ValueType>
-struct HostIterate<RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, typename RP, typename Functor,
+          typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
                    std::enable_if_t<std::is_void<ValueType>::value>> {
   using index_type = typename RP::index_type;
   using point_type = typename RP::point_type;
@@ -1385,12 +1674,14 @@ struct HostIterate<RP, Functor, Tag, ValueType,
 
   inline void operator()() const {
     // std::cout << "HostIterate ParallelFor" << std::endl;
-    Loop_Type<RP::rank, index_type, (RP::inner_direction == Iterate::Left),
-              Tag>::apply(m_func, m_rp.m_lower, m_rp.m_upper);
+    Loop_Type<StrAssumption, RP::rank, index_type,
+              (RP::inner_direction == Iterate::Left), Tag>::apply(m_func,
+                                                                  m_rp.m_lower,
+                                                                  m_rp.m_upper);
   }
 
   auto getHostIterateFunction(/*RP const& rp, Functor const& func*/) const {
-    return Loop_Type<RP::rank, index_type,
+    return Loop_Type<StrAssumption, RP::rank, index_type,
                      (RP::inner_direction == Iterate::Left),
                      Tag>::getApply(m_func, m_rp.m_lower, m_rp.m_upper);
   }
@@ -1402,8 +1693,9 @@ struct HostIterate<RP, Functor, Tag, ValueType,
 
 // For ParallelReduce
 // ValueType - scalar: For reductions
-template <typename RP, typename Functor, typename Tag, typename ValueType>
-struct HostIterate<RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, typename RP, typename Functor,
+          typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
                    std::enable_if_t<!std::is_void<ValueType>::value &&
                                     !std::is_array<ValueType>::value>> {
   using index_type = typename RP::index_type;
@@ -1414,7 +1706,8 @@ struct HostIterate<RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   inline void operator()(value_type& val) const {
-    Loop_Type<RP::rank, index_type, (RP::inner_direction == Iterate::Left),
+    Loop_Type<StrAssumption, RP::rank, index_type,
+              (RP::inner_direction == Iterate::Left),
               Tag>::apply(val, m_func.get_functor(), m_rp.m_lower,
                           m_rp.m_upper);
   }
@@ -1426,8 +1719,9 @@ struct HostIterate<RP, Functor, Tag, ValueType,
 // For ParallelReduce
 // Extra specialization for array reductions
 // ValueType[]: For array reductions
-template <typename RP, typename Functor, typename Tag, typename ValueType>
-struct HostIterate<RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, typename RP, typename Functor,
+          typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
                    std::enable_if_t<!std::is_void<ValueType>::value &&
                                     std::is_array<ValueType>::value>> {
   using index_type = typename RP::index_type;
@@ -1441,7 +1735,8 @@ struct HostIterate<RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   inline void operator()(value_type& val) const {
-    Loop_Type<RP::rank, index_type, (RP::inner_direction == Iterate::Left),
+    Loop_Type<StrAssumption, RP::rank, index_type,
+              (RP::inner_direction == Iterate::Left),
               Tag>::apply(val, m_func.get_functor(), m_rp.m_lower,
                           m_rp.m_upper);
   }
