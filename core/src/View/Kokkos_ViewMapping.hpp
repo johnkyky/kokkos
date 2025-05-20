@@ -1471,7 +1471,8 @@ struct ViewOffset<
   template <typename I0, typename I1>
   KOKKOS_INLINE_FUNCTION constexpr size_type operator()(I0 const& i0,
                                                         I1 const& i1) const {
-    return i1 + i0 * m_stride;
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 + i1;
   }
 
   // rank 3
@@ -1479,7 +1480,9 @@ struct ViewOffset<
   KOKKOS_INLINE_FUNCTION constexpr size_type operator()(I0 const& i0,
                                                         I1 const& i1,
                                                         I2 const& i2) const {
-    return i2 + m_dim.N2 * (i1) + i0 * m_stride;
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 + i1 * m_dim.N2 + i2;
   }
 
   // rank 4
@@ -1488,7 +1491,11 @@ struct ViewOffset<
                                                         I1 const& i1,
                                                         I2 const& i2,
                                                         I3 const& i3) const {
-    return i3 + m_dim.N3 * (i2 + m_dim.N2 * (i1)) + i0 * m_stride;
+    __builtin_annotation(m_dim.N3, "dim3");
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 * m_dim.N3 + i1 * m_dim.N2 * m_dim.N3 +
+           i2 * m_dim.N3 + i3;
   }
 
   // rank 5
@@ -1498,8 +1505,13 @@ struct ViewOffset<
                                                         I2 const& i2,
                                                         I3 const& i3,
                                                         I4 const& i4) const {
-    return i4 + m_dim.N4 * (i3 + m_dim.N3 * (i2 + m_dim.N2 * (i1))) +
-           i0 * m_stride;
+    __builtin_annotation(m_dim.N4, "dim4");
+    __builtin_annotation(m_dim.N3, "dim3");
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 * m_dim.N3 * m_dim.N4 +
+           i1 * m_dim.N2 * m_dim.N3 * m_dim.N4 + i2 * m_dim.N3 * m_dim.N4 +
+           i3 * m_dim.N3 + i4;
   }
 
   // rank 6
@@ -1508,10 +1520,15 @@ struct ViewOffset<
   KOKKOS_INLINE_FUNCTION constexpr size_type operator()(
       I0 const& i0, I1 const& i1, I2 const& i2, I3 const& i3, I4 const& i4,
       I5 const& i5) const {
-    return i5 +
-           m_dim.N5 *
-               (i4 + m_dim.N4 * (i3 + m_dim.N3 * (i2 + m_dim.N2 * (i1)))) +
-           i0 * m_stride;
+    __builtin_annotation(m_dim.N5, "dim5");
+    __builtin_annotation(m_dim.N4, "dim4");
+    __builtin_annotation(m_dim.N3, "dim3");
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 +
+           i1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 +
+           i2 * m_dim.N3 * m_dim.N4 * m_dim.N5 + i3 * m_dim.N4 * m_dim.N5 +
+           i4 * m_dim.N5 + i5;
   }
 
   // rank 7
@@ -1520,12 +1537,18 @@ struct ViewOffset<
   KOKKOS_INLINE_FUNCTION constexpr size_type operator()(
       I0 const& i0, I1 const& i1, I2 const& i2, I3 const& i3, I4 const& i4,
       I5 const& i5, I6 const& i6) const {
-    return i6 +
-           m_dim.N6 *
-               (i5 + m_dim.N5 *
-                         (i4 + m_dim.N4 *
-                                   (i3 + m_dim.N3 * (i2 + m_dim.N2 * (i1))))) +
-           i0 * m_stride;
+    __builtin_annotation(m_dim.N6, "dim6");
+    __builtin_annotation(m_dim.N5, "dim5");
+    __builtin_annotation(m_dim.N4, "dim4");
+    __builtin_annotation(m_dim.N3, "dim3");
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 *
+               m_dim.N6 +
+           i1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 * m_dim.N6 +
+           i2 * m_dim.N3 * m_dim.N4 * m_dim.N5 * m_dim.N6 +
+           i3 * m_dim.N4 * m_dim.N5 * m_dim.N6 + i4 * m_dim.N5 * m_dim.N6 +
+           i5 * m_dim.N6 + i6;
   }
 
   // rank 8
@@ -1534,15 +1557,21 @@ struct ViewOffset<
   KOKKOS_INLINE_FUNCTION constexpr size_type operator()(
       I0 const& i0, I1 const& i1, I2 const& i2, I3 const& i3, I4 const& i4,
       I5 const& i5, I6 const& i6, I7 const& i7) const {
-    return i7 +
-           m_dim.N7 *
-               (i6 +
-                m_dim.N6 *
-                    (i5 +
-                     m_dim.N5 *
-                         (i4 + m_dim.N4 *
-                                   (i3 + m_dim.N3 * (i2 + m_dim.N2 * (i1)))))) +
-           i0 * m_stride;
+    __builtin_annotation(m_dim.N7, "dim7");
+    __builtin_annotation(m_dim.N6, "dim6");
+    __builtin_annotation(m_dim.N5, "dim5");
+    __builtin_annotation(m_dim.N4, "dim4");
+    __builtin_annotation(m_dim.N3, "dim3");
+    __builtin_annotation(m_dim.N2, "dim2");
+    __builtin_annotation(m_dim.N1, "dim1");
+    return i0 * m_dim.N1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 *
+               m_dim.N6 * m_dim.N7 +
+           i1 * m_dim.N2 * m_dim.N3 * m_dim.N4 * m_dim.N5 * m_dim.N6 *
+               m_dim.N7 +
+           i2 * m_dim.N3 * m_dim.N4 * m_dim.N5 * m_dim.N6 * m_dim.N7 +
+           i3 * m_dim.N4 * m_dim.N5 * m_dim.N6 * m_dim.N7 +
+           i4 * m_dim.N5 * m_dim.N6 * m_dim.N7 + i5 * m_dim.N6 * m_dim.N7 +
+           i6 * m_dim.N7 + i7;
   }
 
   //----------------------------------------
@@ -1739,9 +1768,9 @@ struct ViewOffset<
   }
 #else
 
-  ViewOffset()                             = default;
-  ViewOffset(const ViewOffset&)            = default;
-  ViewOffset& operator=(const ViewOffset&) = default;
+  ViewOffset()                                   = default;
+  ViewOffset(const ViewOffset&)                  = default;
+  ViewOffset& operator=(const ViewOffset& other) = default;
 #endif
 
   /* Enable padding for trivial scalar types with non-zero trivial scalar size.
@@ -2749,11 +2778,10 @@ class ViewMapping<
   KOKKOS_INLINE_FUNCTION ViewMapping() : m_impl_handle(), m_impl_offset() {}
 
   KOKKOS_DEFAULTED_FUNCTION ViewMapping(const ViewMapping&) = default;
-  KOKKOS_DEFAULTED_FUNCTION ViewMapping& operator=(const ViewMapping&) =
-      default;
+  KOKKOS_DEFAULTED_FUNCTION ViewMapping& operator=(const ViewMapping&) = delete;
 
   KOKKOS_DEFAULTED_FUNCTION ViewMapping(ViewMapping&&)            = default;
-  KOKKOS_DEFAULTED_FUNCTION ViewMapping& operator=(ViewMapping&&) = default;
+  KOKKOS_DEFAULTED_FUNCTION ViewMapping& operator=(ViewMapping&&) = delete;
 
   //----------------------------------------
 
@@ -2865,35 +2893,31 @@ class ViewMapping<
 template <class DstTraits, class SrcTraits>
 class ViewMapping<
     DstTraits, SrcTraits,
-    std::enable_if_t<(
-        !(std::is_same_v<typename SrcTraits::array_layout,
-                         LayoutStride>)&&  // Added to have a new
-                                           // specialization for
-                                           // SrcType of
-                                           // LayoutStride
-        // default mappings
-        std::is_void_v<typename DstTraits::specialize> &&
-        std::is_void_v<typename SrcTraits::specialize> &&
-        (
-            // same layout
-            std::is_same_v<typename DstTraits::array_layout,
-                           typename SrcTraits::array_layout> ||
-            // known layout
-            ((std::is_same_v<typename DstTraits::array_layout,
-                             Kokkos::LayoutLeft> ||
-              std::is_same_v<typename DstTraits::array_layout,
-                             Kokkos::LayoutRight> ||
-              std::is_same_v<
-                  typename DstTraits::array_layout,
-                  Kokkos::LayoutStride>)&&(std::is_same_v<typename SrcTraits::
-                                                              array_layout,
-                                                          Kokkos::LayoutLeft> ||
-                                           std::is_same_v<
-                                               typename SrcTraits::array_layout,
-                                               Kokkos::LayoutRight> ||
-                                           std::is_same_v<
-                                               typename SrcTraits::array_layout,
-                                               Kokkos::LayoutStride>))))>> {
+    std::enable_if_t<(!(std::is_same_v<typename SrcTraits::array_layout,
+                                       LayoutStride>) &&  // Added to have a new
+                                                          // specialization for
+                                                          // SrcType of
+                                                          // LayoutStride
+                      // default mappings
+                      std::is_void_v<typename DstTraits::specialize> &&
+                      std::is_void_v<typename SrcTraits::specialize> &&
+                      (
+                          // same layout
+                          std::is_same_v<typename DstTraits::array_layout,
+                                         typename SrcTraits::array_layout> ||
+                          // known layout
+                          ((std::is_same_v<typename DstTraits::array_layout,
+                                           Kokkos::LayoutLeft> ||
+                            std::is_same_v<typename DstTraits::array_layout,
+                                           Kokkos::LayoutRight> ||
+                            std::is_same_v<typename DstTraits::array_layout,
+                                           Kokkos::LayoutStride>) &&
+                           (std::is_same_v<typename SrcTraits::array_layout,
+                                           Kokkos::LayoutLeft> ||
+                            std::is_same_v<typename SrcTraits::array_layout,
+                                           Kokkos::LayoutRight> ||
+                            std::is_same_v<typename SrcTraits::array_layout,
+                                           Kokkos::LayoutStride>))))>> {
  private:
   enum {
     is_assignable_space = Kokkos::Impl::MemorySpaceAccess<

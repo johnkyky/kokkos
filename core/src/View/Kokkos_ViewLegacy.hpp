@@ -318,8 +318,9 @@ class View : public ViewTraits<DataType, Properties...> {
                                            traits::dimension::rank_dynamic>
       rank_dynamic = {};
 #ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  enum {Rank KOKKOS_DEPRECATED_WITH_COMMENT("Use rank instead.") =
-            map_type::Rank};
+  enum {
+    Rank KOKKOS_DEPRECATED_WITH_COMMENT("Use rank instead.") = map_type::Rank
+  };
 #endif
 
   template <typename iType>
@@ -567,8 +568,12 @@ class View : public ViewTraits<DataType, Properties...> {
     } else if constexpr (is_layout_right) {
       if constexpr (rank_dynamic == 0)
         return m_map.m_impl_handle[i1 + m_map.m_impl_offset.m_dim.N1 * i0];
-      else
-        return m_map.m_impl_handle[i1 + m_map.m_impl_offset.m_stride * i0];
+      else {
+        // __builtin_annotation((intptr_t)label().c_str(), "name");
+        __builtin_annotation((intptr_t)m_map.m_impl_handle, "array");
+        __builtin_annotation(m_map.m_impl_offset.m_dim.N1, "dim1");
+        return m_map.m_impl_handle[i1 + m_map.m_impl_offset.m_dim.N1 * i0];
+      }
     } else {
       static_assert(is_layout_stride);
       return m_map.m_impl_handle[i0 * m_map.m_impl_offset.m_stride.S0 +
@@ -590,6 +595,8 @@ class View : public ViewTraits<DataType, Properties...> {
   operator()(Is... indices) const {
     check_operator_parens_valid_args(indices...);
     KOKKOS_IMPL_VIEW_OPERATOR_VERIFY(m_track, m_map, indices...)
+
+    __builtin_annotation((intptr_t)m_map.m_impl_handle, "array");
     return m_map.m_impl_handle[m_map.m_impl_offset(indices...)];
   }
 
@@ -925,7 +932,7 @@ class View : public ViewTraits<DataType, Properties...> {
       : m_track(rhs), m_map() {
     using SrcTraits = typename View<RT, RP...>::traits;
     using Mapping   = Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                              typename traits::specialize>;
+                                                typename traits::specialize>;
     static_assert(Mapping::is_assignable,
                   "Incompatible View copy construction");
     Mapping::assign(m_map, rhs.m_map, rhs.m_track.m_tracker);
@@ -940,7 +947,7 @@ class View : public ViewTraits<DataType, Properties...> {
   operator=(const View<RT, RP...>& rhs) {
     using SrcTraits = typename View<RT, RP...>::traits;
     using Mapping   = Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                              typename traits::specialize>;
+                                                typename traits::specialize>;
     static_assert(Mapping::is_assignable, "Incompatible View copy assignment");
     Mapping::assign(m_map, rhs.m_map, rhs.m_track.m_tracker);
     m_track.assign(rhs);
