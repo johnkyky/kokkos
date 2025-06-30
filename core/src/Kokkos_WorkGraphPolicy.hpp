@@ -55,7 +55,7 @@ class WorkGraphPolicy : public Kokkos::Impl::PolicyTraits<Properties...> {
   };
 
  private:
-  using ints_type = Kokkos::View<std::int32_t*, memory_space>;
+  using ints_type = Kokkos::View<"default", std::int32_t*, memory_space>;
 
   // Let N = m_graph.numRows(), the total work
   // m_queue[  0 ..   N-1] = the ready queue

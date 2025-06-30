@@ -125,9 +125,9 @@ class AcquireTeamUniqueToken {
   using token_type       = UniqueToken<exec_space>;
   using size_type        = typename token_type::size_type;
   using team_member_type = typename TeamPolicy::member_type;
-  using scratch_view =
-      Kokkos::View<size_type, typename exec_space::scratch_memory_space,
-                   Kokkos::MemoryUnmanaged>;
+  using scratch_view     = Kokkos::View<"default", size_type,
+                                        typename exec_space::scratch_memory_space,
+                                        Kokkos::MemoryUnmanaged>;
 
  private:
   token_type my_token;

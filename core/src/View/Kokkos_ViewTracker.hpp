@@ -19,7 +19,7 @@
 
 namespace Kokkos {
 
-template <class DataType, class... Properties>
+template <ConstExprLabel Label, class DataType, class... Properties>
 class View;
 
 namespace Impl {
@@ -54,15 +54,15 @@ struct ViewTracker {
     assign(vt);
   }
 
-  template <class RT, class... RP>
+  template <ConstExprLabel Label, class RT, class... RP>
   KOKKOS_INLINE_FUNCTION explicit ViewTracker(
-      const View<RT, RP...>& vt) noexcept
+      const View<Label, RT, RP...>& vt) noexcept
       : m_tracker() {
     assign(vt);
   }
 
-  template <class RT, class... RP>
-  KOKKOS_INLINE_FUNCTION void assign(const View<RT, RP...>& vt) noexcept {
+  template <ConstExprLabel Label, class RT, class... RP>
+  KOKKOS_INLINE_FUNCTION void assign(const View<Label, RT, RP...>& vt) noexcept {
     if (this == reinterpret_cast<const ViewTracker*>(&vt.m_track)) return;
     KOKKOS_IF_ON_HOST((
         if (view_traits::is_managed && Kokkos::Impl::SharedAllocationRecord<

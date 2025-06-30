@@ -38,7 +38,7 @@ struct Sum {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -72,8 +72,9 @@ struct Sum {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE Sum(View<Scalar, Properties...> const&)
-    -> Sum<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE Sum(View<"default", Scalar, Properties...> const&)
+    -> Sum<Scalar,
+           typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct Prod {
@@ -83,7 +84,7 @@ struct Prod {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -117,8 +118,9 @@ struct Prod {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE Prod(View<Scalar, Properties...> const&)
-    -> Prod<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE Prod(View<"default", Scalar, Properties...> const&)
+    -> Prod<Scalar,
+            typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct Min {
@@ -128,7 +130,7 @@ struct Min {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -164,8 +166,9 @@ struct Min {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE Min(View<Scalar, Properties...> const&)
-    -> Min<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE Min(View<"default", Scalar, Properties...> const&)
+    -> Min<Scalar,
+           typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct Max {
@@ -175,7 +178,7 @@ struct Max {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -212,8 +215,9 @@ struct Max {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE Max(View<Scalar, Properties...> const&)
-    -> Max<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE Max(View<"default", Scalar, Properties...> const&)
+    -> Max<Scalar,
+           typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct LAnd {
@@ -223,7 +227,7 @@ struct LAnd {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -258,8 +262,9 @@ struct LAnd {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE LAnd(View<Scalar, Properties...> const&)
-    -> LAnd<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE LAnd(View<"default", Scalar, Properties...> const&)
+    -> LAnd<Scalar,
+            typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct LOr {
@@ -269,7 +274,7 @@ struct LOr {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -305,8 +310,9 @@ struct LOr {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE LOr(View<Scalar, Properties...> const&)
-    -> LOr<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE LOr(View<"default", Scalar, Properties...> const&)
+    -> LOr<Scalar,
+           typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct BAnd {
@@ -316,7 +322,7 @@ struct BAnd {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -352,8 +358,9 @@ struct BAnd {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE BAnd(View<Scalar, Properties...> const&)
-    -> BAnd<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE BAnd(View<"default", Scalar, Properties...> const&)
+    -> BAnd<Scalar,
+            typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Space>
 struct BOr {
@@ -363,7 +370,7 @@ struct BOr {
   using value_type = std::remove_cv_t<Scalar>;
   static_assert(!std::is_pointer_v<value_type> && !std::is_array_v<value_type>);
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -399,8 +406,9 @@ struct BOr {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE BOr(View<Scalar, Properties...> const&)
-    -> BOr<Scalar, typename View<Scalar, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE BOr(View<"default", Scalar, Properties...> const&)
+    -> BOr<Scalar,
+           typename View<"default", Scalar, Properties...>::memory_space>;
 
 template <class Scalar, class Index>
 struct ValLocScalar {
@@ -421,7 +429,7 @@ struct MinLoc {
   using reducer    = MinLoc<Scalar, Index, Space>;
   using value_type = ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -464,9 +472,9 @@ struct MinLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinLoc(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&)
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&)
     -> MinLoc<Scalar, Index,
-              typename View<ValLocScalar<Scalar, Index>,
+              typename View<"default", ValLocScalar<Scalar, Index>,
                             Properties...>::memory_space>;
 
 template <class Scalar, class Index, class Space>
@@ -482,7 +490,7 @@ struct MaxLoc {
   using reducer    = MaxLoc<Scalar, Index, Space>;
   using value_type = ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -525,9 +533,9 @@ struct MaxLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MaxLoc(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&)
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&)
     -> MaxLoc<Scalar, Index,
-              typename View<ValLocScalar<Scalar, Index>,
+              typename View<"default", ValLocScalar<Scalar, Index>,
                             Properties...>::memory_space>;
 
 template <class Scalar>
@@ -547,7 +555,7 @@ struct MinMax {
   using reducer    = MinMax<Scalar, Space>;
   using value_type = MinMaxScalar<scalar_type>;
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -589,9 +597,10 @@ struct MinMax {
 };
 
 template <typename Scalar, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE MinMax(View<MinMaxScalar<Scalar>, Properties...> const&)
-    -> MinMax<Scalar,
-              typename View<MinMaxScalar<Scalar>, Properties...>::memory_space>;
+KOKKOS_DEDUCTION_GUIDE MinMax(
+    View<"default", MinMaxScalar<Scalar>, Properties...> const&)
+    -> MinMax<Scalar, typename View<"default", MinMaxScalar<Scalar>,
+                                    Properties...>::memory_space>;
 
 template <class Scalar, class Index>
 struct MinMaxLocScalar {
@@ -612,7 +621,7 @@ struct MinMaxLoc {
   using reducer    = MinMaxLoc<Scalar, Index, Space>;
   using value_type = MinMaxLocScalar<scalar_type, index_type>;
 
-  using result_view_type = Kokkos::View<value_type, Space>;
+  using result_view_type = Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -665,9 +674,9 @@ struct MinMaxLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinMaxLoc(
-    View<MinMaxLocScalar<Scalar, Index>, Properties...> const&)
+    View<"default", MinMaxLocScalar<Scalar, Index>, Properties...> const&)
     -> MinMaxLoc<Scalar, Index,
-                 typename View<MinMaxLocScalar<Scalar, Index>,
+                 typename View<"default", MinMaxLocScalar<Scalar, Index>,
                                Properties...>::memory_space>;
 
 // --------------------------------------------------
@@ -691,7 +700,7 @@ struct MaxFirstLoc {
   using reducer    = MaxFirstLoc<Scalar, Index, Space>;
   using value_type = ::Kokkos::ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -733,9 +742,9 @@ struct MaxFirstLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MaxFirstLoc(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&)
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&)
     -> MaxFirstLoc<Scalar, Index,
-                   typename View<ValLocScalar<Scalar, Index>,
+                   typename View<"default", ValLocScalar<Scalar, Index>,
                                  Properties...>::memory_space>;
 
 //
@@ -757,7 +766,7 @@ struct MaxFirstLocCustomComparator {
       MaxFirstLocCustomComparator<Scalar, Index, ComparatorType, Space>;
   using value_type = ::Kokkos::ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -803,10 +812,12 @@ struct MaxFirstLocCustomComparator {
 template <typename Scalar, typename Index, typename ComparatorType,
           typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MaxFirstLocCustomComparator(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&, ComparatorType)
-    -> MaxFirstLocCustomComparator<Scalar, Index, ComparatorType,
-                                   typename View<ValLocScalar<Scalar, Index>,
-                                                 Properties...>::memory_space>;
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&,
+    ComparatorType)
+    -> MaxFirstLocCustomComparator<
+        Scalar, Index, ComparatorType,
+        typename View<"default", ValLocScalar<Scalar, Index>,
+                      Properties...>::memory_space>;
 
 //
 // MinFirstLoc
@@ -825,7 +836,7 @@ struct MinFirstLoc {
   using reducer    = MinFirstLoc<Scalar, Index, Space>;
   using value_type = ::Kokkos::ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -867,9 +878,9 @@ struct MinFirstLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinFirstLoc(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&)
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&)
     -> MinFirstLoc<Scalar, Index,
-                   typename View<ValLocScalar<Scalar, Index>,
+                   typename View<"default", ValLocScalar<Scalar, Index>,
                                  Properties...>::memory_space>;
 
 //
@@ -891,7 +902,7 @@ struct MinFirstLocCustomComparator {
       MinFirstLocCustomComparator<Scalar, Index, ComparatorType, Space>;
   using value_type = ::Kokkos::ValLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -937,10 +948,12 @@ struct MinFirstLocCustomComparator {
 template <typename Scalar, typename Index, typename ComparatorType,
           typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinFirstLocCustomComparator(
-    View<ValLocScalar<Scalar, Index>, Properties...> const&, ComparatorType)
-    -> MinFirstLocCustomComparator<Scalar, Index, ComparatorType,
-                                   typename View<ValLocScalar<Scalar, Index>,
-                                                 Properties...>::memory_space>;
+    View<"default", ValLocScalar<Scalar, Index>, Properties...> const&,
+    ComparatorType)
+    -> MinFirstLocCustomComparator<
+        Scalar, Index, ComparatorType,
+        typename View<"default", ValLocScalar<Scalar, Index>,
+                      Properties...>::memory_space>;
 
 //
 // MinMaxFirstLastLoc
@@ -959,7 +972,7 @@ struct MinMaxFirstLastLoc {
   using reducer    = MinMaxFirstLastLoc<Scalar, Index, Space>;
   using value_type = ::Kokkos::MinMaxLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1012,10 +1025,11 @@ struct MinMaxFirstLastLoc {
 
 template <typename Scalar, typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinMaxFirstLastLoc(
-    View<MinMaxLocScalar<Scalar, Index>, Properties...> const&)
-    -> MinMaxFirstLastLoc<Scalar, Index,
-                          typename View<MinMaxLocScalar<Scalar, Index>,
-                                        Properties...>::memory_space>;
+    View<"default", MinMaxLocScalar<Scalar, Index>, Properties...> const&)
+    -> MinMaxFirstLastLoc<
+        Scalar, Index,
+        typename View<"default", MinMaxLocScalar<Scalar, Index>,
+                      Properties...>::memory_space>;
 
 //
 // MinMaxFirstLastLocCustomComparator
@@ -1036,7 +1050,7 @@ struct MinMaxFirstLastLocCustomComparator {
       MinMaxFirstLastLocCustomComparator<Scalar, Index, ComparatorType, Space>;
   using value_type = ::Kokkos::MinMaxLocScalar<scalar_type, index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1092,10 +1106,11 @@ struct MinMaxFirstLastLocCustomComparator {
 template <typename Scalar, typename Index, typename ComparatorType,
           typename... Properties>
 KOKKOS_DEDUCTION_GUIDE MinMaxFirstLastLocCustomComparator(
-    View<MinMaxLocScalar<Scalar, Index>, Properties...> const&, ComparatorType)
+    View<"default", MinMaxLocScalar<Scalar, Index>, Properties...> const&,
+    ComparatorType)
     -> MinMaxFirstLastLocCustomComparator<
         Scalar, Index, ComparatorType,
-        typename View<MinMaxLocScalar<Scalar, Index>,
+        typename View<"default", MinMaxLocScalar<Scalar, Index>,
                       Properties...>::memory_space>;
 
 //
@@ -1117,7 +1132,7 @@ struct FirstLoc {
   using reducer    = FirstLoc<Index, Space>;
   using value_type = FirstLocScalar<index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1156,8 +1171,8 @@ struct FirstLoc {
 
 template <typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE FirstLoc(
-    View<FirstLocScalar<Index>, Properties...> const&)
-    -> FirstLoc<Index, typename View<FirstLocScalar<Index>,
+    View<"default", FirstLocScalar<Index>, Properties...> const&)
+    -> FirstLoc<Index, typename View<"default", FirstLocScalar<Index>,
                                      Properties...>::memory_space>;
 
 //
@@ -1179,7 +1194,7 @@ struct LastLoc {
   using reducer    = LastLoc<Index, Space>;
   using value_type = LastLocScalar<index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1217,8 +1232,9 @@ struct LastLoc {
 };
 
 template <typename Index, typename... Properties>
-KOKKOS_DEDUCTION_GUIDE LastLoc(View<LastLocScalar<Index>, Properties...> const&)
-    -> LastLoc<Index, typename View<LastLocScalar<Index>,
+KOKKOS_DEDUCTION_GUIDE LastLoc(
+    View<"default", LastLocScalar<Index>, Properties...> const&)
+    -> LastLoc<Index, typename View<"default", LastLocScalar<Index>,
                                     Properties...>::memory_space>;
 
 template <class Index>
@@ -1240,7 +1256,7 @@ struct StdIsPartitioned {
   using reducer    = StdIsPartitioned<Index, Space>;
   using value_type = StdIsPartScalar<index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1285,8 +1301,8 @@ struct StdIsPartitioned {
 
 template <typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE StdIsPartitioned(
-    View<StdIsPartScalar<Index>, Properties...> const&)
-    -> StdIsPartitioned<Index, typename View<StdIsPartScalar<Index>,
+    View<"default", StdIsPartScalar<Index>, Properties...> const&)
+    -> StdIsPartitioned<Index, typename View<"default", StdIsPartScalar<Index>,
                                              Properties...>::memory_space>;
 
 template <class Index>
@@ -1308,7 +1324,7 @@ struct StdPartitionPoint {
   using reducer    = StdPartitionPoint<Index, Space>;
   using value_type = StdPartPointScalar<index_type>;
 
-  using result_view_type = ::Kokkos::View<value_type, Space>;
+  using result_view_type = ::Kokkos::View<"default", value_type, Space>;
 
  private:
   result_view_type value;
@@ -1348,9 +1364,10 @@ struct StdPartitionPoint {
 
 template <typename Index, typename... Properties>
 KOKKOS_DEDUCTION_GUIDE StdPartitionPoint(
-    View<StdPartPointScalar<Index>, Properties...> const&)
-    -> StdPartitionPoint<Index, typename View<StdPartPointScalar<Index>,
-                                              Properties...>::memory_space>;
+    View<"default", StdPartPointScalar<Index>, Properties...> const&)
+    -> StdPartitionPoint<Index,
+                         typename View<"default", StdPartPointScalar<Index>,
+                                       Properties...>::memory_space>;
 
 }  // namespace Kokkos
 namespace Kokkos {
@@ -1424,8 +1441,8 @@ struct ParallelReduceReturnValue<
                       !std::is_pointer_v<ReturnType>) &&
                      !Kokkos::is_reducer<ReturnType>::value>,
     ReturnType, FunctorType> {
-  using return_type =
-      Kokkos::View<ReturnType, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+  using return_type = Kokkos::View<"default", ReturnType, Kokkos::HostSpace,
+                                   Kokkos::MemoryUnmanaged>;
 
   using reducer_type = InvalidType;
 
@@ -1441,7 +1458,7 @@ struct ParallelReduceReturnValue<
     std::enable_if_t<(std::is_array_v<ReturnType> ||
                       std::is_pointer_v<ReturnType>)>,
     ReturnType, FunctorType> {
-  using return_type = Kokkos::View<std::remove_const_t<ReturnType>,
+  using return_type = Kokkos::View<"default", std::remove_const_t<ReturnType>,
                                    Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
 
   using reducer_type = InvalidType;
@@ -1871,7 +1888,8 @@ inline void parallel_reduce(
       "Calling parallel_reduce without either return value or final function.");
 
   using result_view_type =
-      Kokkos::View<value_type, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+      Kokkos::View<"default", value_type, Kokkos::HostSpace,
+                   Kokkos::MemoryUnmanaged>;
   result_view_type result_view;
 
   Impl::ParallelReduceAdaptor<PolicyType, FunctorType, result_view_type,
@@ -1896,7 +1914,8 @@ inline void parallel_reduce(
       "Calling parallel_reduce without either return value or final function.");
 
   using result_view_type =
-      Kokkos::View<value_type, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+      Kokkos::View<"default", value_type, Kokkos::HostSpace,
+                   Kokkos::MemoryUnmanaged>;
   result_view_type result_view;
 
   Impl::ParallelReduceAdaptor<PolicyType, FunctorType, result_view_type,
@@ -1920,7 +1939,8 @@ inline void parallel_reduce(const size_t& policy, const FunctorType& functor) {
       "Calling parallel_reduce without either return value or final function.");
 
   using result_view_type =
-      Kokkos::View<value_type, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+      Kokkos::View<"default", value_type, Kokkos::HostSpace,
+                   Kokkos::MemoryUnmanaged>;
   result_view_type result_view;
 
   Impl::ParallelReduceAdaptor<policy_type, FunctorType, result_view_type,
@@ -1946,7 +1966,8 @@ inline void parallel_reduce(const std::string& label, const size_t& policy,
       "Calling parallel_reduce without either return value or final function.");
 
   using result_view_type =
-      Kokkos::View<value_type, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+      Kokkos::View<"default", value_type, Kokkos::HostSpace,
+                   Kokkos::MemoryUnmanaged>;
   result_view_type result_view;
 
   Impl::ParallelReduceAdaptor<policy_type, FunctorType, result_view_type,

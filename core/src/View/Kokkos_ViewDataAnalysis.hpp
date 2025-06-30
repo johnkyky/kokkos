@@ -71,7 +71,7 @@ struct rank_dynamic<Val, Args...> {
   template <unsigned RD>                                                    \
   struct ViewDimension##R<0u, RD> {                                         \
     static constexpr size_t ArgN##R = 0;                                    \
-    std::conditional_t<(RD < 3), size_t, unsigned> N##R;                    \
+    size_t N##R;                                                            \
     ViewDimension##R()                                   = default;         \
     ViewDimension##R(const ViewDimension##R&)            = default;         \
     ViewDimension##R& operator=(const ViewDimension##R&) = default;         \

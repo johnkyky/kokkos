@@ -75,8 +75,8 @@ class Crs {
   using staticcrsgraph_type = Crs<DataType, Arg1Type, Arg2Type, SizeType>;
   using HostMirror =
       Crs<DataType, array_layout, typename traits::host_mirror_space, SizeType>;
-  using row_map_type = View<size_type*, array_layout, device_type>;
-  using entries_type = View<DataType*, array_layout, device_type>;
+  using row_map_type = View<"default", size_type*, array_layout, device_type>;
+  using entries_type = View<"default", DataType*, array_layout, device_type>;
 
   row_map_type row_map;
   entries_type entries;
@@ -169,7 +169,7 @@ class CrsRowMapFromCounts {
   using value_type      = typename OutRowMap::value_type;
   using index_type      = typename InCounts::size_type;
   using last_value_type =
-      Kokkos::View<value_type, typename InCounts::device_type>;
+      Kokkos::View<"default", value_type, typename InCounts::device_type>;
 
  private:
   InCounts m_in;
@@ -216,7 +216,7 @@ class FillCrsTransposeEntries {
   using index_type      = typename InCrs::size_type;
 
  private:
-  using counters_type = View<index_type*, memory_space>;
+  using counters_type = View<"default", index_type*, memory_space>;
   InCrs in;
   OutCrs out;
   counters_type counters;
@@ -278,7 +278,7 @@ void transpose_crs(Crs<DataType, Arg1Type, Arg2Type, SizeType>& out,
                    Crs<DataType, Arg1Type, Arg2Type, SizeType> const& in) {
   using crs_type     = Crs<DataType, Arg1Type, Arg2Type, SizeType>;
   using memory_space = typename crs_type::memory_space;
-  using counts_type  = View<SizeType*, memory_space>;
+  using counts_type  = View<"default", SizeType*, memory_space>;
   {
     counts_type counts;
     Kokkos::get_crs_transpose_counts(counts, in);

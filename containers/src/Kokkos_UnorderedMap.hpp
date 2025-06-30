@@ -268,24 +268,24 @@ class UnorderedMap {
   using impl_value_type = std::conditional_t<is_set, int, declared_value_type>;
 
   using key_type_view = std::conditional_t<
-      is_insertable_map, View<key_type *, device_type>,
-      View<const key_type *, device_type, MemoryTraits<RandomAccess>>>;
+      is_insertable_map, View<"default", key_type *, device_type>,
+      View<"default", const key_type *, device_type, MemoryTraits<RandomAccess>>>;
 
   using value_type_view = std::conditional_t<
       is_insertable_map || is_modifiable_map,
-      View<impl_value_type *, device_type>,
-      View<const impl_value_type *, device_type, MemoryTraits<RandomAccess>>>;
+      View<"default", impl_value_type *, device_type>,
+      View<"default", const impl_value_type *, device_type, MemoryTraits<RandomAccess>>>;
 
   using size_type_view = std::conditional_t<
-      is_insertable_map, View<size_type *, device_type>,
-      View<const size_type *, device_type, MemoryTraits<RandomAccess>>>;
+      is_insertable_map, View<"default", size_type *, device_type>,
+      View<"default", const size_type *, device_type, MemoryTraits<RandomAccess>>>;
 
   using bitset_type = std::conditional_t<is_insertable_map, Bitset<Device>,
                                          ConstBitset<Device>>;
 
   enum { modified_idx = 0, erasable_idx = 1, failed_insert_idx = 2 };
   enum { num_scalars = 3 };
-  using scalars_view = View<int[num_scalars], LayoutLeft, device_type>;
+  using scalars_view = View<"default", int[num_scalars], LayoutLeft, device_type>;
 
  public:
   //! \name Public member functions
@@ -935,7 +935,7 @@ class UnorderedMap {
   bool m_bounded_insert;
   hasher_type m_hasher;
   equal_to_type m_equal_to;
-  using shared_size_t = View<size_type, Kokkos::DefaultHostExecutionSpace>;
+  using shared_size_t = View<"default", size_type, Kokkos::DefaultHostExecutionSpace>;
   shared_size_t m_size;
   bitset_type m_available_indexes;
   size_type_view m_hash_lists;

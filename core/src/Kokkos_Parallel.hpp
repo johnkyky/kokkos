@@ -476,7 +476,7 @@ inline void parallel_scan(const std::string& str, const ExecutionPolicy& policy,
             functor, inner_policy, return_value);
     closure.execute();
   } else {
-    Kokkos::View<ReturnType, Kokkos::HostSpace> view(&return_value);
+    Kokkos::View<"default", ReturnType, Kokkos::HostSpace> view(&return_value);
     auto closure =
         Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
             Impl::ParallelScanWithTotal<FunctorType, ExecutionPolicy,

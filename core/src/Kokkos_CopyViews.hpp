@@ -794,12 +794,12 @@ struct ViewRemap {
   }
 };
 
-template <typename ExecutionSpace, class DT, class... DP>
+template <ConstExprLabel Labell, typename ExecutionSpace, class DT, class... DP>
 inline void contiguous_fill(
-    const ExecutionSpace& exec_space, const View<DT, DP...>& dst,
+    const ExecutionSpace& exec_space, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
-  using ViewType     = View<DT, DP...>;
-  using ViewTypeFlat = Kokkos::View<
+  using ViewType     = View<Labell, DT, DP...>;
+  using ViewTypeFlat = Kokkos::View<Labell, 
       typename ViewType::value_type*, Kokkos::LayoutRight,
       Kokkos::Device<typename ViewType::execution_space,
                      std::conditional_t<ViewType::rank == 0,
@@ -819,22 +819,22 @@ inline void contiguous_fill(
 }
 
 // Default implementation for execution spaces that don't provide a definition
-template <typename ExecutionSpace>
+template <ConstExprLabel Labell, typename ExecutionSpace>
 struct ZeroMemset {
   ZeroMemset(const ExecutionSpace& exec_space, void* dst, size_t cnt) {
     contiguous_fill(
         exec_space,
-        Kokkos::View<std::byte*, ExecutionSpace, Kokkos::MemoryUnmanaged>(
+        Kokkos::View<Labell, std::byte*, ExecutionSpace, Kokkos::MemoryUnmanaged>(
             static_cast<std::byte*>(dst), cnt),
         std::byte{});
   }
 };
 
-template <typename ExecutionSpace, class DT, class... DP>
+template <ConstExprLabel Labell, typename ExecutionSpace, class DT, class... DP>
 inline std::enable_if_t<
     std::is_trivial_v<typename ViewTraits<DT, DP...>::value_type>>
 contiguous_fill_or_memset(
-    const ExecutionSpace& exec_space, const View<DT, DP...>& dst,
+    const ExecutionSpace& exec_space, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
   // With OpenMP, using memset has significant performance issues.
   if (Impl::is_zero_byte(value)
@@ -846,29 +846,29 @@ contiguous_fill_or_memset(
     // resulting in compilation errors; explicitly passing the template
     // parameter to ZeroMemset helps workaround the issue.
     // See https://github.com/kokkos/kokkos/issues/7273.
-    ZeroMemset<ExecutionSpace>(
+    ZeroMemset<Labell, ExecutionSpace>(
         exec_space, dst.data(),
         dst.size() * sizeof(typename ViewTraits<DT, DP...>::value_type));
   else
     contiguous_fill(exec_space, dst, value);
 }
 
-template <typename ExecutionSpace, class DT, class... DP>
+template <ConstExprLabel Labell, typename ExecutionSpace, class DT, class... DP>
 inline std::enable_if_t<
     !std::is_trivial_v<typename ViewTraits<DT, DP...>::value_type>>
 contiguous_fill_or_memset(
-    const ExecutionSpace& exec_space, const View<DT, DP...>& dst,
+    const ExecutionSpace& exec_space, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
   contiguous_fill(exec_space, dst, value);
 }
 
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 inline std::enable_if_t<
     std::is_trivial_v<typename ViewTraits<DT, DP...>::value_type>>
 contiguous_fill_or_memset(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
-  using ViewType        = View<DT, DP...>;
+  using ViewType        = View<Labell, DT, DP...>;
   using exec_space_type = typename ViewType::execution_space;
   exec_space_type exec;
 
@@ -880,20 +880,20 @@ contiguous_fill_or_memset(
     // resulting in compilation errors; explicitly passing the template
     // parameter to ZeroMemset helps workaround the issue.
     // See https://github.com/kokkos/kokkos/issues/7273.
-    ZeroMemset<exec_space_type>(
+    ZeroMemset<Labell, exec_space_type>(
         exec, dst.data(), dst.size() * sizeof(typename ViewType::value_type));
   else
 #endif
     contiguous_fill(exec, dst, value);
 }
 
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 inline std::enable_if_t<
     !std::is_trivial_v<typename ViewTraits<DT, DP...>::value_type>>
 contiguous_fill_or_memset(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
-  using ViewType        = View<DT, DP...>;
+  using ViewType        = View<Labell, DT, DP...>;
   using exec_space_type = typename ViewType::execution_space;
 
   contiguous_fill(exec_space_type(), dst, value);
@@ -901,13 +901,13 @@ contiguous_fill_or_memset(
 }  // namespace Impl
 
 /** \brief  Deep copy a value from Host memory into a view.  */
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 inline void deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<std::is_same_v<typename ViewTraits<DT, DP...>::specialize,
                                     void>>* = nullptr) {
-  using ViewType        = View<DT, DP...>;
+  using ViewType        = View<Labell, DT, DP...>;
   using exec_space_type = typename ViewType::execution_space;
 
   if (Kokkos::Tools::Experimental::get_callbacks().begin_deep_copy != nullptr) {
@@ -998,10 +998,10 @@ inline void deep_copy(
 }
 
 /** \brief  Deep copy into a value in Host memory from a view.  */
-template <class ST, class... SP>
+template <ConstExprLabel Labell, class ST, class... SP>
 inline void deep_copy(
     typename ViewTraits<ST, SP...>::non_const_value_type& dst,
-    const View<ST, SP...>& src,
+    const View<Labell, ST, SP...>& src,
     std::enable_if_t<std::is_same_v<typename ViewTraits<ST, SP...>::specialize,
                                     void>>* = nullptr) {
   using src_traits       = ViewTraits<ST, SP...>;
@@ -1035,16 +1035,16 @@ inline void deep_copy(
 
 //----------------------------------------------------------------------------
 /** \brief  A deep copy between views of compatible type, and rank zero.  */
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc,  class ST, class... SP>
 inline void deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<
         (std::is_void_v<typename ViewTraits<DT, DP...>::specialize> &&
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) == unsigned(0) &&
           unsigned(ViewTraits<ST, SP...>::rank) == unsigned(0)))>* = nullptr) {
-  using dst_type = View<DT, DP...>;
-  using src_type = View<ST, SP...>;
+  using dst_type = View<LabellDst, DT, DP...>;
+  using src_type = View<LabellSrc, ST, SP...>;
 
   using value_type       = typename dst_type::value_type;
   using dst_memory_space = typename dst_type::memory_space;
@@ -1087,16 +1087,16 @@ inline void deep_copy(
 /** \brief  A deep copy between views of the default specialization, compatible
  * type, same non-zero rank, same contiguous layout.
  */
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 inline void deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<
         (std::is_void_v<typename ViewTraits<DT, DP...>::specialize> &&
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) != 0 ||
           unsigned(ViewTraits<ST, SP...>::rank) != 0))>* = nullptr) {
-  using dst_type         = View<DT, DP...>;
-  using src_type         = View<ST, SP...>;
+  using dst_type         = View<LabellDst, DT, DP...>;
+  using src_type         = View<LabellSrc, ST, SP...>;
   using dst_memory_space = typename dst_type::memory_space;
   using src_memory_space = typename src_type::memory_space;
   using dst_value_type   = typename dst_type::value_type;
@@ -1264,26 +1264,26 @@ namespace Experimental {
 /** \brief  A local deep copy between views of the default specialization,
  * compatible type, same non-zero rank.
  */
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION
-local_deep_copy_contiguous(const TeamType& team, const View<DT, DP...>& dst,
-                           const View<ST, SP...>& src) {
+local_deep_copy_contiguous(const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+                           const View<LabellSrc, ST, SP...>& src) {
   Kokkos::parallel_for(Kokkos::TeamVectorRange(team, src.span()),
                        [&](const int& i) { dst.data()[i] = src.data()[i]; });
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy_contiguous(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src) {
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src) {
   for (size_t i = 0; i < src.span(); ++i) {
     dst.data()[i] = src.data()[i];
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 1 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 1)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1298,10 +1298,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   team.team_barrier();
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 2 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 2)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1325,10 +1325,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 3 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 3)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1354,10 +1354,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 4 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 4)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1386,10 +1386,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 5 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 5)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1420,10 +1420,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 6 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 6)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1456,10 +1456,10 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP, class ST, class... SP>
+template <class TeamType, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const TeamType& team, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 7 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 7)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1495,9 +1495,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 1 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 1)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1511,9 +1511,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 2 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 2)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1528,9 +1528,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 3 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 3)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1547,9 +1547,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 4 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 4)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1567,9 +1567,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 5 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 5)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1588,9 +1588,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 6 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 6)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1610,9 +1610,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP, class ST, class... SP>
+template <ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst, const View<ST, SP...>& src,
+    const View<LabellDst, DT, DP...>& dst, const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 7 &&
                       unsigned(ViewTraits<ST, SP...>::rank) == 7)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1636,9 +1636,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 /** \brief  Deep copy a value into a view.  */
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy_contiguous(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<std::is_same_v<typename ViewTraits<DT, DP...>::specialize,
                                     void>>* = nullptr) {
@@ -1646,9 +1646,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy_contiguous(
                        [&](const int& i) { dst.data()[i] = value; });
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy_contiguous(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<std::is_same_v<typename ViewTraits<DT, DP...>::specialize,
                                     void>>* = nullptr) {
@@ -1657,9 +1657,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy_contiguous(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 1)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1674,9 +1674,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   team.team_barrier();
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 2)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1700,9 +1700,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 3)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1728,9 +1728,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 4)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1759,9 +1759,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 5)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1792,9 +1792,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 6)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1827,9 +1827,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class TeamType, class DT, class... DP>
+template <class TeamType, ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const TeamType& team, const View<DT, DP...>& dst,
+    const TeamType& team, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 7)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1865,9 +1865,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 1)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1881,9 +1881,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 2)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1898,9 +1898,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 3)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1916,9 +1916,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 4)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1936,9 +1936,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 5)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1957,9 +1957,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 6)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -1979,9 +1979,9 @@ void KOKKOS_INLINE_FUNCTION local_deep_copy(
   }
 }
 //----------------------------------------------------------------------------
-template <class DT, class... DP>
+template <ConstExprLabel Labell, class DT, class... DP>
 void KOKKOS_INLINE_FUNCTION local_deep_copy(
-    const View<DT, DP...>& dst,
+    const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<(unsigned(ViewTraits<DT, DP...>::rank) == 7)>* = nullptr) {
   if (dst.data() == nullptr) {
@@ -2011,9 +2011,9 @@ namespace Kokkos {
 
 /** \brief  Deep copy a value from Host memory into a view. ExecSpace can access
  * dst */
-template <class ExecSpace, class DT, class... DP>
+template <class ExecSpace, ConstExprLabel Labell, class DT, class... DP>
 inline void deep_copy(
-    const ExecSpace& space, const View<DT, DP...>& dst,
+    const ExecSpace& space, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<
         Kokkos::is_execution_space<ExecSpace>::value &&
@@ -2038,7 +2038,7 @@ inline void deep_copy(
   } else if (dst.span_is_contiguous()) {
     Impl::contiguous_fill_or_memset(space, dst, value);
   } else {
-    using ViewType = View<DT, DP...>;
+    using ViewType = View<Labell, DT, DP...>;
     // Figure out iteration order to do the ViewFill
     int64_t strides[ViewType::rank + 1];
     dst.stride(strides);
@@ -2091,9 +2091,9 @@ inline void deep_copy(
 
 /** \brief  Deep copy a value from Host memory into a view. ExecSpace can not
  * access dst */
-template <class ExecSpace, class DT, class... DP>
+template <class ExecSpace, ConstExprLabel Labell, class DT, class... DP>
 inline void deep_copy(
-    const ExecSpace& space, const View<DT, DP...>& dst,
+    const ExecSpace& space, const View<Labell, DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value,
     std::enable_if_t<
         Kokkos::is_execution_space<ExecSpace>::value &&
@@ -2123,9 +2123,9 @@ inline void deep_copy(
       Impl::contiguous_fill_or_memset(fill_exec_space(), dst, value);
     } else {
       using ViewTypeUniform = std::conditional_t<
-          View<DT, DP...>::rank == 0,
-          typename View<DT, DP...>::uniform_runtime_type,
-          typename View<DT, DP...>::uniform_runtime_nomemspace_type>;
+          View<Labell, DT, DP...>::rank == 0,
+          typename View<Labell, DT, DP...>::uniform_runtime_type,
+          typename View<Labell, DT, DP...>::uniform_runtime_nomemspace_type>;
       Kokkos::Impl::ViewFill<ViewTypeUniform, typename dst_traits::array_layout,
                              fill_exec_space>(dst, value, fill_exec_space());
     }
@@ -2138,11 +2138,11 @@ inline void deep_copy(
 }
 
 /** \brief  Deep copy into a value in Host memory from a view.  */
-template <class ExecSpace, class ST, class... SP>
+template <class ExecSpace, ConstExprLabel Labell, class ST, class... SP>
 inline void deep_copy(
     const ExecSpace& exec_space,
     typename ViewTraits<ST, SP...>::non_const_value_type& dst,
-    const View<ST, SP...>& src,
+    const View<Labell, ST, SP...>& src,
     std::enable_if_t<Kokkos::is_execution_space<ExecSpace>::value &&
                      std::is_same_v<typename ViewTraits<ST, SP...>::specialize,
                                     void>>* = nullptr) {
@@ -2176,10 +2176,10 @@ inline void deep_copy(
 
 //----------------------------------------------------------------------------
 /** \brief  A deep copy between views of compatible type, and rank zero.  */
-template <class ExecSpace, class DT, class... DP, class ST, class... SP>
+template <class ExecSpace, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 inline void deep_copy(
-    const ExecSpace& exec_space, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const ExecSpace& exec_space, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<
         (Kokkos::is_execution_space<ExecSpace>::value &&
          std::is_void_v<typename ViewTraits<DT, DP...>::specialize> &&
@@ -2226,18 +2226,18 @@ inline void deep_copy(
 /** \brief  A deep copy between views of the default specialization, compatible
  * type, same non-zero rank
  */
-template <class ExecSpace, class DT, class... DP, class ST, class... SP>
+template <class ExecSpace, ConstExprLabel LabellDst, class DT, class... DP, ConstExprLabel LabellSrc, class ST, class... SP>
 inline void deep_copy(
-    const ExecSpace& exec_space, const View<DT, DP...>& dst,
-    const View<ST, SP...>& src,
+    const ExecSpace& exec_space, const View<LabellDst, DT, DP...>& dst,
+    const View<LabellSrc, ST, SP...>& src,
     std::enable_if_t<
         (Kokkos::is_execution_space<ExecSpace>::value &&
          std::is_void_v<typename ViewTraits<DT, DP...>::specialize> &&
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) != 0 ||
           unsigned(ViewTraits<ST, SP...>::rank) != 0))>* = nullptr) {
-  using dst_type = View<DT, DP...>;
-  using src_type = View<ST, SP...>;
+  using dst_type = View<LabellDst, DT, DP...>;
+  using src_type = View<LabellSrc, ST, SP...>;
 
   static_assert(std::is_same_v<typename dst_type::value_type,
                                typename dst_type::non_const_value_type>,
@@ -2435,17 +2435,17 @@ bool size_mismatch(const ViewType& view, unsigned int max_extent,
 
 /** \brief  Resize a view with copying old data to new data at the corresponding
  * indices. */
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
 impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-            Kokkos::View<T, P...>& v, const size_t n0, const size_t n1,
+            Kokkos::View<Labell, T, P...>& v, const size_t n0, const size_t n1,
             const size_t n2, const size_t n3, const size_t n4, const size_t n5,
             const size_t n6, const size_t n7) {
-  using view_type        = Kokkos::View<T, P...>;
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2488,14 +2488,14 @@ impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
   }
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
 resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-       Kokkos::View<T, P...>& v, const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+       Kokkos::View<Labell, T, P...>& v, const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2506,13 +2506,13 @@ resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
   impl_resize(arg_prop, v, n0, n1, n2, n3, n4, n5, n6, n7);
 }
 
-template <class T, class... P>
+template <ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
-resize(Kokkos::View<T, P...>& v, const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+resize(Kokkos::View<Labell, T, P...>& v, const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2523,15 +2523,15 @@ resize(Kokkos::View<T, P...>& v, const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
   impl_resize(Impl::ViewCtorProp<>{}, v, n0, n1, n2, n3, n4, n5, n6, n7);
 }
 
-template <class I, class T, class... P>
+template <class I, ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<
     (Impl::is_view_ctor_property<I>::value ||
      Kokkos::is_execution_space<I>::value) &&
-    (std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    (std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                     Kokkos::LayoutLeft> ||
-     std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+     std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                     Kokkos::LayoutRight>)>
-resize(const I& arg_prop, Kokkos::View<T, P...>& v,
+resize(const I& arg_prop, Kokkos::View<Labell, T, P...>& v,
        const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
        const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2543,18 +2543,18 @@ resize(const I& arg_prop, Kokkos::View<T, P...>& v,
   impl_resize(Kokkos::view_alloc(arg_prop), v, n0, n1, n2, n3, n4, n5, n6, n7);
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutStride>>
 impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-            Kokkos::View<T, P...>& v,
-            const typename Kokkos::View<T, P...>::array_layout& layout) {
-  using view_type        = Kokkos::View<T, P...>;
+            Kokkos::View<Labell, T, P...>& v,
+            const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2589,18 +2589,18 @@ impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
 // FIXME User-provided (custom) layouts are not required to have a comparison
 // operator. Hence, there is no way to check if the requested layout is actually
 // the same as the existing one.
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    !(std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    !(std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutLeft> ||
-      std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+      std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutRight> ||
-      std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+      std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutStride>)>
 impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-            Kokkos::View<T, P...>& v,
-            const typename Kokkos::View<T, P...>::array_layout& layout) {
-  using view_type        = Kokkos::View<T, P...>;
+            Kokkos::View<Labell, T, P...>& v,
+            const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2630,45 +2630,45 @@ impl_resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
   v = v_resized;
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline void resize(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-                   Kokkos::View<T, P...>& v,
-                   const typename Kokkos::View<T, P...>::array_layout& layout) {
+                   Kokkos::View<Labell, T, P...>& v,
+                   const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_resize(arg_prop, v, layout);
 }
 
-template <class I, class T, class... P>
+template <class I, ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<Impl::is_view_ctor_property<I>::value ||
                         Kokkos::is_execution_space<I>::value>
-resize(const I& arg_prop, Kokkos::View<T, P...>& v,
-       const typename Kokkos::View<T, P...>::array_layout& layout) {
+resize(const I& arg_prop, Kokkos::View<Labell, T, P...>& v,
+       const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_resize(arg_prop, v, layout);
 }
 
-template <class ExecutionSpace, class T, class... P>
-inline void resize(const ExecutionSpace& exec_space, Kokkos::View<T, P...>& v,
-                   const typename Kokkos::View<T, P...>::array_layout& layout) {
+template <class ExecutionSpace, ConstExprLabel Labell, class T, class... P>
+inline void resize(const ExecutionSpace& exec_space, Kokkos::View<Labell, T, P...>& v,
+                   const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_resize(Impl::ViewCtorProp<>(), exec_space, v, layout);
 }
 
-template <class T, class... P>
-inline void resize(Kokkos::View<T, P...>& v,
-                   const typename Kokkos::View<T, P...>::array_layout& layout) {
+template <ConstExprLabel Labell, class T, class... P>
+inline void resize(Kokkos::View<Labell, T, P...>& v,
+                   const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_resize(Impl::ViewCtorProp<>{}, v, layout);
 }
 
 /** \brief  Resize a view with discarding old data. */
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
-impl_realloc(Kokkos::View<T, P...>& v, const size_t n0, const size_t n1,
+impl_realloc(Kokkos::View<Labell, T, P...>& v, const size_t n0, const size_t n1,
              const size_t n2, const size_t n3, const size_t n4, const size_t n5,
              const size_t n6, const size_t n7,
              const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop) {
-  using view_type        = Kokkos::View<T, P...>;
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2704,14 +2704,14 @@ impl_realloc(Kokkos::View<T, P...>& v, const size_t n0, const size_t n1,
   }
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
 realloc(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-        Kokkos::View<T, P...>& v,
+        Kokkos::View<Labell, T, P...>& v,
         const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2723,13 +2723,13 @@ realloc(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
   impl_realloc(v, n0, n1, n2, n3, n4, n5, n6, n7, arg_prop);
 }
 
-template <class T, class... P>
+template <ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight>>
-realloc(Kokkos::View<T, P...>& v,
+realloc(Kokkos::View<Labell, T, P...>& v,
         const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2741,14 +2741,14 @@ realloc(Kokkos::View<T, P...>& v,
   impl_realloc(v, n0, n1, n2, n3, n4, n5, n6, n7, Impl::ViewCtorProp<>{});
 }
 
-template <class I, class T, class... P>
+template <class I, ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<
     Impl::is_view_ctor_property<I>::value &&
-    (std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    (std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                     Kokkos::LayoutLeft> ||
-     std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+     std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                     Kokkos::LayoutRight>)>
-realloc(const I& arg_prop, Kokkos::View<T, P...>& v,
+realloc(const I& arg_prop, Kokkos::View<Labell, T, P...>& v,
         const size_t n0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
         const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -2760,18 +2760,18 @@ realloc(const I& arg_prop, Kokkos::View<T, P...>& v,
   impl_realloc(v, n0, n1, n2, n3, n4, n5, n6, n7, Kokkos::view_alloc(arg_prop));
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutLeft> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutRight> ||
-    std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                    Kokkos::LayoutStride>>
-impl_realloc(Kokkos::View<T, P...>& v,
-             const typename Kokkos::View<T, P...>::array_layout& layout,
+impl_realloc(Kokkos::View<Labell, T, P...>& v,
+             const typename Kokkos::View<Labell, T, P...>::array_layout& layout,
              const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop) {
-  using view_type        = Kokkos::View<T, P...>;
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2805,18 +2805,18 @@ impl_realloc(Kokkos::View<T, P...>& v,
 // FIXME User-provided (custom) layouts are not required to have a comparison
 // operator. Hence, there is no way to check if the requested layout is actually
 // the same as the existing one.
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline std::enable_if_t<
-    !(std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+    !(std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutLeft> ||
-      std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+      std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutRight> ||
-      std::is_same_v<typename Kokkos::View<T, P...>::array_layout,
+      std::is_same_v<typename Kokkos::View<Labell, T, P...>::array_layout,
                      Kokkos::LayoutStride>)>
-impl_realloc(Kokkos::View<T, P...>& v,
-             const typename Kokkos::View<T, P...>::array_layout& layout,
+impl_realloc(Kokkos::View<Labell, T, P...>& v,
+             const typename Kokkos::View<Labell, T, P...>::array_layout& layout,
              const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop) {
-  using view_type        = Kokkos::View<T, P...>;
+  using view_type        = Kokkos::View<Labell, T, P...>;
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   static_assert(Kokkos::ViewTraits<T, P...>::is_managed,
@@ -2837,25 +2837,25 @@ impl_realloc(Kokkos::View<T, P...>& v,
   v = view_type(arg_prop_copy, layout);
 }
 
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline void realloc(
     const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-    Kokkos::View<T, P...>& v,
-    const typename Kokkos::View<T, P...>::array_layout& layout) {
+    Kokkos::View<Labell, T, P...>& v,
+    const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_realloc(v, layout, arg_prop);
 }
 
-template <class I, class T, class... P>
+template <class I, ConstExprLabel Labell, class T, class... P>
 inline std::enable_if_t<Impl::is_view_ctor_property<I>::value> realloc(
-    const I& arg_prop, Kokkos::View<T, P...>& v,
-    const typename Kokkos::View<T, P...>::array_layout& layout) {
+    const I& arg_prop, Kokkos::View<Labell, T, P...>& v,
+    const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_realloc(v, layout, Kokkos::view_alloc(arg_prop));
 }
 
-template <class T, class... P>
+template <ConstExprLabel Labell, class T, class... P>
 inline void realloc(
-    Kokkos::View<T, P...>& v,
-    const typename Kokkos::View<T, P...>::array_layout& layout) {
+    Kokkos::View<Labell, T, P...>& v,
+    const typename Kokkos::View<Labell, T, P...>::array_layout& layout) {
   impl_realloc(v, layout, Impl::ViewCtorProp<>{});
 }
 
@@ -2868,10 +2868,10 @@ namespace Kokkos {
 namespace Impl {
 
 // Deduce Mirror Types
-template <class Space, class T, class... P>
+template <class Space, ConstExprLabel Labell, class T, class... P>
 struct MirrorViewType {
   // The incoming view_type
-  using src_view_type = typename Kokkos::View<T, P...>;
+  using src_view_type = typename Kokkos::View<Labell, T, P...>;
   // The memory space for the mirror view
   using memory_space = typename Space::memory_space;
   // Check whether it is the same memory space
@@ -2883,7 +2883,7 @@ struct MirrorViewType {
   // deep_copy to it.
   using data_type = typename src_view_type::non_const_data_type;
   // The destination view type if it is not the same memory space
-  using dest_view_type = Kokkos::View<data_type, array_layout, Space>;
+  using dest_view_type = Kokkos::View<Labell, data_type, array_layout, Space>;
   // If it is the same memory_space return the existsing view_type
   // This will also keep the unmanaged trait if necessary
   using view_type =
@@ -2912,8 +2912,8 @@ void check_view_ctor_args_create_mirror() {
 // create a mirror
 // private interface that accepts arbitrary view constructor args passed by a
 // view_alloc
-template <class T, class... P, class... ViewCtorArgs>
-inline auto create_mirror(const Kokkos::View<T, P...>& src,
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
+inline auto create_mirror(const Kokkos::View<Labell, T, P...>& src,
                           const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop) {
   check_view_ctor_args_create_mirror<ViewCtorArgs...>();
 
@@ -2923,10 +2923,10 @@ inline auto create_mirror(const Kokkos::View<T, P...>& src,
   if constexpr (Impl::ViewCtorProp<ViewCtorArgs...>::has_memory_space) {
     using memory_space = typename decltype(prop_copy)::memory_space;
     using dst_type =
-        typename Impl::MirrorViewType<memory_space, T, P...>::dest_view_type;
+        typename Impl::MirrorViewType<memory_space, Labell, T, P...>::dest_view_type;
     return dst_type(prop_copy, src.layout());
   } else {
-    using dst_type = typename View<T, P...>::HostMirror;
+    using dst_type = typename View<Labell, T, P...>::HostMirror;
     return dst_type(prop_copy, src.layout());
   }
 #if defined(KOKKOS_COMPILER_INTEL) ||                                 \
@@ -2938,48 +2938,48 @@ inline auto create_mirror(const Kokkos::View<T, P...>& src,
 }  // namespace Impl
 
 // public interface
-template <class T, class... P,
+template <ConstExprLabel Labell, class T, class... P,
           typename = std::enable_if_t<
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
-auto create_mirror(Kokkos::View<T, P...> const& src) {
+auto create_mirror(Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror(src, Impl::ViewCtorProp<>{});
 }
 
 // public interface that accepts a without initializing flag
-template <class T, class... P,
+template <ConstExprLabel Labell, class T, class... P,
           typename = std::enable_if_t<
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
 auto create_mirror(Kokkos::Impl::WithoutInitializing_t wi,
-                   Kokkos::View<T, P...> const& src) {
+                   Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror(src, view_alloc(wi));
 }
 
 // public interface that accepts a space
-template <class Space, class T, class... P,
+template <class Space, ConstExprLabel Labell, class T, class... P,
           typename Enable = std::enable_if_t<
               Kokkos::is_space<Space>::value &&
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
-auto create_mirror(Space const&, Kokkos::View<T, P...> const& src) {
+auto create_mirror(Space const&, Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror(src, view_alloc(typename Space::memory_space{}));
 }
 
 // public interface that accepts arbitrary view constructor args passed by a
 // view_alloc
-template <class T, class... P, class... ViewCtorArgs,
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs,
           typename = std::enable_if_t<
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
 auto create_mirror(Impl::ViewCtorProp<ViewCtorArgs...> const& arg_prop,
-                   Kokkos::View<T, P...> const& src) {
+                   Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror(src, arg_prop);
 }
 
 // public interface that accepts a space and a without initializing flag
-template <class Space, class T, class... P,
+template <class Space, ConstExprLabel Labell, class T, class... P,
           typename Enable = std::enable_if_t<
               Kokkos::is_space<Space>::value &&
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
 auto create_mirror(Kokkos::Impl::WithoutInitializing_t wi, Space const&,
-                   Kokkos::View<T, P...> const& src) {
+                   Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror(src,
                              view_alloc(typename Space::memory_space{}, wi));
 }
@@ -3051,29 +3051,29 @@ inline auto choose_create_mirror(
 // create a mirror view
 // private interface that accepts arbitrary view constructor args passed by a
 // view_alloc
-template <class T, class... P, class... ViewCtorArgs>
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs>
 inline auto create_mirror_view(
-    const Kokkos::View<T, P...>& src,
+    const Kokkos::View<Labell, T, P...>& src,
     [[maybe_unused]] const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop) {
   if constexpr (!Impl::ViewCtorProp<ViewCtorArgs...>::has_memory_space) {
-    if constexpr (std::is_same_v<typename Kokkos::View<T, P...>::memory_space,
-                                 typename Kokkos::View<
+    if constexpr (std::is_same_v<typename Kokkos::View<Labell, T, P...>::memory_space,
+                                 typename Kokkos::View<Labell, 
                                      T, P...>::HostMirror::memory_space> &&
                   std::is_same_v<
-                      typename Kokkos::View<T, P...>::data_type,
-                      typename Kokkos::View<T, P...>::HostMirror::data_type>) {
+                      typename Kokkos::View<Labell, T, P...>::data_type,
+                      typename Kokkos::View<Labell, T, P...>::HostMirror::data_type>) {
       check_view_ctor_args_create_mirror<ViewCtorArgs...>();
-      return typename Kokkos::View<T, P...>::HostMirror(src);
+      return typename Kokkos::View<Labell, T, P...>::HostMirror(src);
     } else {
       return Kokkos::Impl::choose_create_mirror(src, arg_prop);
     }
   } else {
     if constexpr (Impl::MirrorViewType<typename Impl::ViewCtorProp<
-                                           ViewCtorArgs...>::memory_space,
+                                           ViewCtorArgs...>::memory_space, Labell, 
                                        T, P...>::is_same_memspace) {
       check_view_ctor_args_create_mirror<ViewCtorArgs...>();
       return typename Impl::MirrorViewType<
-          typename Impl::ViewCtorProp<ViewCtorArgs...>::memory_space, T,
+          typename Impl::ViewCtorProp<ViewCtorArgs...>::memory_space, Labell, T,
           P...>::view_type(src);
     } else {
       return Kokkos::Impl::choose_create_mirror(src, arg_prop);
@@ -3088,42 +3088,42 @@ inline auto create_mirror_view(
 }  // namespace Impl
 
 // public interface
-template <class T, class... P>
-auto create_mirror_view(const Kokkos::View<T, P...>& src) {
+template <ConstExprLabel Labell, class T, class... P>
+auto create_mirror_view(const Kokkos::View<Labell, T, P...>& src) {
   return Impl::create_mirror_view(src, view_alloc());
 }
 
 // public interface that accepts a without initializing flag
-template <class T, class... P>
+template <ConstExprLabel Labell, class T, class... P>
 auto create_mirror_view(Kokkos::Impl::WithoutInitializing_t wi,
-                        Kokkos::View<T, P...> const& src) {
+                        Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror_view(src, view_alloc(wi));
 }
 
 // public interface that accepts a space
-template <class Space, class T, class... P,
+template <class Space, ConstExprLabel Labell, class T, class... P,
           class Enable = std::enable_if_t<Kokkos::is_space<Space>::value>>
-auto create_mirror_view(const Space&, const Kokkos::View<T, P...>& src) {
+auto create_mirror_view(const Space&, const Kokkos::View<Labell, T, P...>& src) {
   return Impl::create_mirror_view(src,
                                   view_alloc(typename Space::memory_space()));
 }
 
 // public interface that accepts a space and a without initializing flag
-template <class Space, class T, class... P,
+template <class Space, ConstExprLabel Labell, class T, class... P,
           typename Enable = std::enable_if_t<Kokkos::is_space<Space>::value>>
 auto create_mirror_view(Kokkos::Impl::WithoutInitializing_t wi, Space const&,
-                        Kokkos::View<T, P...> const& src) {
+                        Kokkos::View<Labell, T, P...> const& src) {
   return Impl::create_mirror_view(
       src, view_alloc(typename Space::memory_space{}, wi));
 }
 
 // public interface that accepts arbitrary view constructor args passed by a
 // view_alloc
-template <class T, class... P, class... ViewCtorArgs,
+template <ConstExprLabel Labell, class T, class... P, class... ViewCtorArgs,
           typename = std::enable_if_t<
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
 auto create_mirror_view(const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-                        const Kokkos::View<T, P...>& src) {
+                        const Kokkos::View<Labell, T, P...>& src) {
   return Impl::create_mirror_view(src, arg_prop);
 }
 
@@ -3153,17 +3153,17 @@ void check_view_ctor_args_create_mirror_view_and_copy() {
 // create a mirror view and deep copy it
 // public interface that accepts arbitrary view constructor args passed by a
 // view_alloc
-template <class... ViewCtorArgs, class T, class... P,
+template <class... ViewCtorArgs, ConstExprLabel Labell, class T, class... P,
           class Enable = std::enable_if_t<
               std::is_void_v<typename ViewTraits<T, P...>::specialize>>>
 auto create_mirror_view_and_copy(
     [[maybe_unused]] const Impl::ViewCtorProp<ViewCtorArgs...>& arg_prop,
-    const Kokkos::View<T, P...>& src) {
+    const Kokkos::View<Labell, T, P...>& src) {
   using alloc_prop_input = Impl::ViewCtorProp<ViewCtorArgs...>;
 
   Impl::check_view_ctor_args_create_mirror_view_and_copy<ViewCtorArgs...>();
 
-  if constexpr (Impl::MirrorViewType<typename alloc_prop_input::memory_space, T,
+  if constexpr (Impl::MirrorViewType<typename alloc_prop_input::memory_space, Labell, T,
                                      P...>::is_same_memspace) {
     // same behavior as deep_copy(src, src)
     if constexpr (!alloc_prop_input::has_execution_space)
@@ -3173,7 +3173,7 @@ auto create_mirror_view_and_copy(
     return src;
   } else {
     using Space  = typename alloc_prop_input::memory_space;
-    using Mirror = typename Impl::MirrorViewType<Space, T, P...>::view_type;
+    using Mirror = typename Impl::MirrorViewType<Space, Labell, T, P...>::view_type;
 
     auto arg_prop_copy = Impl::with_properties_if_unset(
         arg_prop, std::string{}, WithoutInitializing,
@@ -3198,11 +3198,11 @@ auto create_mirror_view_and_copy(
 // Previously when using auto here, the intel compiler 19.3 would
 // sometimes not create a symbol, guessing that it somehow is a combination
 // of auto and just forwarding arguments (see issue #5196)
-template <class Space, class T, class... P,
+template <class Space, ConstExprLabel Labell, class T, class... P,
           typename Enable = std::enable_if_t<Kokkos::is_space<Space>::value>>
-typename Impl::MirrorViewType<Space, T, P...>::view_type
+typename Impl::MirrorViewType<Space, Labell, T, P...>::view_type
 create_mirror_view_and_copy(
-    const Space&, const Kokkos::View<T, P...>& src,
+    const Space&, const Kokkos::View<Labell, T, P...>& src,
     std::string const& name = "",
     std::enable_if_t<
         std::is_void_v<typename ViewTraits<T, P...>::specialize>>* = nullptr) {

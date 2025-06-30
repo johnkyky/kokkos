@@ -49,7 +49,7 @@ struct ViewUniformLayout<Kokkos::LayoutRight, 1> {
   using array_layout = Kokkos::LayoutLeft;
 };
 
-template <class ViewType, int Traits>
+template <ConstExprLabel Labell, class ViewType, int Traits>
 struct ViewUniformType {
   using data_type       = typename ViewType::data_type;
   using const_data_type = typename ViewType::const_data_type;
@@ -71,24 +71,24 @@ struct ViewUniformType {
 
   using memory_traits = typename Kokkos::MemoryTraits<Traits>;
   using type =
-      Kokkos::View<data_type, array_layout, device_type, memory_traits>;
+      Kokkos::View<Labell, data_type, array_layout, device_type, memory_traits>;
   using const_type =
-      Kokkos::View<const_data_type, array_layout, device_type, memory_traits>;
+      Kokkos::View<Labell, const_data_type, array_layout, device_type, memory_traits>;
   using runtime_type =
-      Kokkos::View<runtime_data_type, array_layout, device_type, memory_traits>;
-  using runtime_const_type = Kokkos::View<runtime_const_data_type, array_layout,
+      Kokkos::View<Labell, runtime_data_type, array_layout, device_type, memory_traits>;
+  using runtime_const_type = Kokkos::View<Labell, runtime_const_data_type, array_layout,
                                           device_type, memory_traits>;
 
-  using nomemspace_type = Kokkos::View<data_type, array_layout,
+  using nomemspace_type = Kokkos::View<Labell, data_type, array_layout,
                                        anonymous_device_type, memory_traits>;
   using const_nomemspace_type =
-      Kokkos::View<const_data_type, array_layout, anonymous_device_type,
+      Kokkos::View<Labell, const_data_type, array_layout, anonymous_device_type,
                    memory_traits>;
   using runtime_nomemspace_type =
-      Kokkos::View<runtime_data_type, array_layout, anonymous_device_type,
+      Kokkos::View<Labell, runtime_data_type, array_layout, anonymous_device_type,
                    memory_traits>;
   using runtime_const_nomemspace_type =
-      Kokkos::View<runtime_const_data_type, array_layout, anonymous_device_type,
+      Kokkos::View<Labell, runtime_const_data_type, array_layout, anonymous_device_type,
                    memory_traits>;
 };
 }  // namespace Impl

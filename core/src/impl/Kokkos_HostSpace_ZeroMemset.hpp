@@ -24,8 +24,8 @@
 namespace Kokkos {
 namespace Impl {
 
-template <>
-struct ZeroMemset<HostSpace::execution_space> {
+template <ConstExprLabel Labell>
+struct ZeroMemset<Labell, HostSpace::execution_space> {
   ZeroMemset(const HostSpace::execution_space& exec, void* dst, size_t cnt) {
     // Host spaces, except for HPX, are synchronous and we need to fence for HPX
     // since we can't properly enqueue a std::memset otherwise.

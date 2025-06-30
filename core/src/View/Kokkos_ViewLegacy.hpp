@@ -141,18 +141,19 @@ namespace Kokkos {
 template <class T1, class T2>
 struct is_always_assignable_impl;
 
-template <class... ViewTDst, class... ViewTSrc>
-struct is_always_assignable_impl<Kokkos::View<ViewTDst...>,
-                                 Kokkos::View<ViewTSrc...>> {
+template <ConstExprLabel LabelDst, class... ViewTDst, ConstExprLabel LabelSrc,
+          class... ViewTSrc>
+struct is_always_assignable_impl<Kokkos::View<LabelDst, ViewTDst...>,
+                                 Kokkos::View<LabelSrc, ViewTSrc...>> {
   using mapping_type = Kokkos::Impl::ViewMapping<
-      typename Kokkos::View<ViewTDst...>::traits,
-      typename Kokkos::View<ViewTSrc...>::traits,
-      typename Kokkos::View<ViewTDst...>::traits::specialize>;
+      LabelDst, typename Kokkos::View<LabelDst, ViewTDst...>::traits,
+      typename Kokkos::View<LabelSrc, ViewTSrc...>::traits,
+      typename Kokkos::View<LabelDst, ViewTDst...>::traits::specialize>;
 
   constexpr static bool value =
       mapping_type::is_assignable &&
-      static_cast<int>(Kokkos::View<ViewTDst...>::rank_dynamic) >=
-          static_cast<int>(Kokkos::View<ViewTSrc...>::rank_dynamic);
+      static_cast<int>(Kokkos::View<LabelDst, ViewTDst...>::rank_dynamic) >=
+          static_cast<int>(Kokkos::View<LabelSrc, ViewTSrc...>::rank_dynamic);
 };
 
 template <class View1, class View2>
@@ -164,17 +165,21 @@ template <class T1, class T2>
 inline constexpr bool is_always_assignable_v =
     is_always_assignable<T1, T2>::value;
 
-template <class... ViewTDst, class... ViewTSrc>
-constexpr bool is_assignable(const Kokkos::View<ViewTDst...>& dst,
-                             const Kokkos::View<ViewTSrc...>& src) {
-  using DstTraits = typename Kokkos::View<ViewTDst...>::traits;
-  using SrcTraits = typename Kokkos::View<ViewTSrc...>::traits;
+template <ConstExprLabel LabelDst, class DataDst, class... PropsDst,
+          ConstExprLabel LabelSrc, class DataSrc, class... PropsSrc>
+constexpr bool is_assignable(
+    const Kokkos::View<LabelDst, DataDst, PropsDst...>& dst,
+    const Kokkos::View<LabelSrc, DataSrc, PropsSrc...>& src) {
+  using DstTraits =
+      typename Kokkos::View<LabelDst, DataDst, PropsDst...>::traits;
+  using SrcTraits =
+      typename Kokkos::View<LabelSrc, DataSrc, PropsSrc...>::traits;
   using mapping_type =
-      Kokkos::Impl::ViewMapping<DstTraits, SrcTraits,
+      Kokkos::Impl::ViewMapping<LabelDst, DstTraits, SrcTraits,
                                 typename DstTraits::specialize>;
 
-  return is_always_assignable_v<Kokkos::View<ViewTDst...>,
-                                Kokkos::View<ViewTSrc...>> ||
+  return is_always_assignable_v<Kokkos::View<LabelDst, DataDst, PropsDst...>,
+                                Kokkos::View<LabelSrc, DataSrc, PropsSrc...>> ||
          (mapping_type::is_assignable &&
           ((DstTraits::dimension::rank_dynamic >= 1) ||
            (dst.static_extent(0) == src.extent(0))) &&
@@ -206,27 +211,27 @@ constexpr bool is_assignable(const Kokkos::View<ViewTDst...>& dst,
 
 namespace Kokkos {
 
-template <class DataType, class... Properties>
+template <ConstExprLabel Labell, class DataType, class... Properties>
 class View;
 
 template <class>
 struct is_view : public std::false_type {};
 
-template <class D, class... P>
-struct is_view<View<D, P...>> : public std::true_type {};
+template <ConstExprLabel Labell, class D, class... P>
+struct is_view<View<Labell, D, P...>> : public std::true_type {};
 
-template <class D, class... P>
-struct is_view<const View<D, P...>> : public std::true_type {};
+template <ConstExprLabel Labell, class D, class... P>
+struct is_view<const View<Labell, D, P...>> : public std::true_type {};
 
 template <class T>
 inline constexpr bool is_view_v = is_view<T>::value;
 
-template <class DataType, class... Properties>
+template <ConstExprLabel Labell, class DataType, class... Properties>
 class View : public ViewTraits<DataType, Properties...> {
  private:
-  template <class, class...>
+  template <ConstExprLabel, class, class...>
   friend class View;
-  template <class, class...>
+  template <ConstExprLabel, class, class...>
   friend class Kokkos::Impl::ViewMapping;
 
   using view_tracker_type = Kokkos::Impl::ViewTracker<View>;
@@ -236,7 +241,7 @@ class View : public ViewTraits<DataType, Properties...> {
 
  private:
   using map_type =
-      Kokkos::Impl::ViewMapping<traits, typename traits::specialize>;
+      Kokkos::Impl::ViewMapping<Labell, traits, typename traits::specialize>;
   template <typename V>
   friend struct Kokkos::Impl::ViewTracker;
   using hooks_policy = typename traits::hooks_policy;
@@ -248,25 +253,26 @@ class View : public ViewTraits<DataType, Properties...> {
   //----------------------------------------
   /** \brief  Compatible view of array of scalar types */
   using array_type =
-      View<typename traits::scalar_array_type, typename traits::array_layout,
-           typename traits::device_type, typename traits::hooks_policy,
-           typename traits::memory_traits>;
+      View<Labell, typename traits::scalar_array_type,
+           typename traits::array_layout, typename traits::device_type,
+           typename traits::hooks_policy, typename traits::memory_traits>;
 
   /** \brief  Compatible view of const data type */
   using const_type =
-      View<typename traits::const_data_type, typename traits::array_layout,
-           typename traits::device_type, typename traits::hooks_policy,
-           typename traits::memory_traits>;
+      View<Labell, typename traits::const_data_type,
+           typename traits::array_layout, typename traits::device_type,
+           typename traits::hooks_policy, typename traits::memory_traits>;
 
   /** \brief  Compatible view of non-const data type */
   using non_const_type =
-      View<typename traits::non_const_data_type, typename traits::array_layout,
-           typename traits::device_type, typename traits::hooks_policy,
-           typename traits::memory_traits>;
+      View<Labell, typename traits::non_const_data_type,
+           typename traits::array_layout, typename traits::device_type,
+           typename traits::hooks_policy, typename traits::memory_traits>;
 
   /** \brief  Compatible host mirror view */
   using host_mirror_type =
-      View<typename traits::non_const_data_type, typename traits::array_layout,
+      View<Labell, typename traits::non_const_data_type,
+           typename traits::array_layout,
            Device<DefaultHostExecutionSpace,
                   typename traits::host_mirror_space::memory_space>,
            typename traits::hooks_policy>;
@@ -275,21 +281,22 @@ class View : public ViewTraits<DataType, Properties...> {
   using HostMirror = host_mirror_type;
 
   /** \brief Unified types */
-  using uniform_type = typename Impl::ViewUniformType<View, 0>::type;
+  using uniform_type = typename Impl::ViewUniformType<Labell, View, 0>::type;
   using uniform_const_type =
-      typename Impl::ViewUniformType<View, 0>::const_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::const_type;
   using uniform_runtime_type =
-      typename Impl::ViewUniformType<View, 0>::runtime_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::runtime_type;
   using uniform_runtime_const_type =
-      typename Impl::ViewUniformType<View, 0>::runtime_const_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::runtime_const_type;
   using uniform_nomemspace_type =
-      typename Impl::ViewUniformType<View, 0>::nomemspace_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::nomemspace_type;
   using uniform_const_nomemspace_type =
-      typename Impl::ViewUniformType<View, 0>::const_nomemspace_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::const_nomemspace_type;
   using uniform_runtime_nomemspace_type =
-      typename Impl::ViewUniformType<View, 0>::runtime_nomemspace_type;
+      typename Impl::ViewUniformType<Labell, View, 0>::runtime_nomemspace_type;
   using uniform_runtime_const_nomemspace_type =
-      typename Impl::ViewUniformType<View, 0>::runtime_const_nomemspace_type;
+      typename Impl::ViewUniformType<Labell, View,
+                                     0>::runtime_const_nomemspace_type;
 
   using reference_type = typename map_type::reference_type;
   using pointer_type   = typename map_type::pointer_type;
@@ -433,7 +440,7 @@ class View : public ViewTraits<DataType, Properties...> {
   // Allow specializations to query their specialized map
 
   KOKKOS_INLINE_FUNCTION
-  const Kokkos::Impl::ViewMapping<traits, typename traits::specialize>&
+  const Kokkos::Impl::ViewMapping<Labell, traits, typename traits::specialize>&
   impl_map() const {
     return m_map;
   }
@@ -571,6 +578,7 @@ class View : public ViewTraits<DataType, Properties...> {
       else {
         // __builtin_annotation((intptr_t)label().c_str(), "name");
         __builtin_annotation((intptr_t)m_map.m_impl_handle, "array");
+        __builtin_annotation((intptr_t)Labell.value, "name");
         __builtin_annotation(m_map.m_impl_offset.m_dim.N1, "dim1");
         return m_map.m_impl_handle[i1 + m_map.m_impl_offset.m_dim.N1 * i0];
       }
@@ -597,6 +605,7 @@ class View : public ViewTraits<DataType, Properties...> {
     KOKKOS_IMPL_VIEW_OPERATOR_VERIFY(m_track, m_map, indices...)
 
     __builtin_annotation((intptr_t)m_map.m_impl_handle, "array");
+    __builtin_annotation((intptr_t)Labell.view(), "name");
     return m_map.m_impl_handle[m_map.m_impl_offset(indices...)];
   }
 
@@ -925,13 +934,13 @@ class View : public ViewTraits<DataType, Properties...> {
 
   template <class RT, class... RP>
   KOKKOS_INLINE_FUNCTION View(
-      const View<RT, RP...>& rhs,
+      const View<Labell, RT, RP...>& rhs,
       std::enable_if_t<Kokkos::Impl::ViewMapping<
-          traits, typename View<RT, RP...>::traits,
+          Labell, traits, typename View<Labell, RT, RP...>::traits,
           typename traits::specialize>::is_assignable_data_type>* = nullptr)
       : m_track(rhs), m_map() {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping   = Kokkos::Impl::ViewMapping<traits, SrcTraits,
+    using SrcTraits = typename View<Labell, RT, RP...>::traits;
+    using Mapping   = Kokkos::Impl::ViewMapping<Labell, traits, SrcTraits,
                                                 typename traits::specialize>;
     static_assert(Mapping::is_assignable,
                   "Incompatible View copy construction");
@@ -941,12 +950,12 @@ class View : public ViewTraits<DataType, Properties...> {
   template <class RT, class... RP>
   KOKKOS_INLINE_FUNCTION std::enable_if_t<
       Kokkos::Impl::ViewMapping<
-          traits, typename View<RT, RP...>::traits,
+          Labell, traits, typename View<Labell, RT, RP...>::traits,
           typename traits::specialize>::is_assignable_data_type,
       View>&
-  operator=(const View<RT, RP...>& rhs) {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping   = Kokkos::Impl::ViewMapping<traits, SrcTraits,
+  operator=(const View<Labell, RT, RP...>& rhs) {
+    using SrcTraits = typename View<Labell, RT, RP...>::traits;
+    using Mapping   = Kokkos::Impl::ViewMapping<Labell, traits, SrcTraits,
                                                 typename traits::specialize>;
     static_assert(Mapping::is_assignable, "Incompatible View copy assignment");
     Mapping::assign(m_map, rhs.m_map, rhs.m_track.m_tracker);
@@ -959,18 +968,19 @@ class View : public ViewTraits<DataType, Properties...> {
   // may assign unmanaged from managed.
 
   template <class RT, class... RP, class Arg0, class... Args>
-  KOKKOS_INLINE_FUNCTION View(const View<RT, RP...>& src_view, const Arg0 arg0,
-                              Args... args)
+  KOKKOS_INLINE_FUNCTION View(const View<Labell, RT, RP...>& src_view,
+                              const Arg0 arg0, Args... args)
       : m_track(src_view), m_map() {
-    using SrcType = View<RT, RP...>;
+    using SrcType = View<Labell, RT, RP...>;
 
-    using Mapping = Kokkos::Impl::ViewMapping<void, typename SrcType::traits,
-                                              Arg0, Args...>;
+    using Mapping =
+        Kokkos::Impl::ViewMapping<Labell, void, typename SrcType::traits, Arg0,
+                                  Args...>;
 
     using DstType = typename Mapping::type;
 
     static_assert(
-        Kokkos::Impl::ViewMapping<traits, typename DstType::traits,
+        Kokkos::Impl::ViewMapping<Labell, traits, typename DstType::traits,
                                   typename traits::specialize>::is_assignable,
         "Subview construction requires compatible view and subview arguments");
 
@@ -1170,10 +1180,11 @@ class View : public ViewTraits<DataType, Properties...> {
   template <class Traits>
   KOKKOS_INLINE_FUNCTION View(
       const view_tracker_type& track,
-      const Kokkos::Impl::ViewMapping<Traits, typename Traits::specialize>& map)
+      const Kokkos::Impl::ViewMapping<Labell, Traits,
+                                      typename Traits::specialize>& map)
       : m_track(track), m_map() {
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, Traits, typename traits::specialize>;
+    using Mapping = Kokkos::Impl::ViewMapping<Labell, traits, Traits,
+                                              typename traits::specialize>;
     static_assert(Mapping::is_assignable,
                   "Incompatible View copy construction");
     Mapping::assign(m_map, map, track.m_tracker);
@@ -1185,10 +1196,11 @@ class View : public ViewTraits<DataType, Properties...> {
   template <class Traits>
   KOKKOS_INLINE_FUNCTION View(
       const typename view_tracker_type::track_type& track,
-      const Kokkos::Impl::ViewMapping<Traits, typename Traits::specialize>& map)
+      const Kokkos::Impl::ViewMapping<Labell, Traits,
+                                      typename Traits::specialize>& map)
       : m_track(track), m_map() {
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, Traits, typename traits::specialize>;
+    using Mapping = Kokkos::Impl::ViewMapping<Labell, traits, Traits,
+                                              typename traits::specialize>;
     static_assert(Mapping::is_assignable,
                   "Incompatible View copy construction");
     Mapping::assign(m_map, map, track);
@@ -1381,9 +1393,9 @@ class View : public ViewTraits<DataType, Properties...> {
 #endif  // KOKKOS_ENABLE_IMPL_MDSPAN
 };
 
-template <typename D, class... P>
-KOKKOS_INLINE_FUNCTION constexpr unsigned rank(const View<D, P...>&) {
-  return View<D, P...>::rank();
+template <ConstExprLabel Labell, typename D, class... P>
+KOKKOS_INLINE_FUNCTION constexpr unsigned rank(const View<Labell, D, P...>&) {
+  return View<Labell, D, P...>::rank();
 }
 
 namespace Impl {
@@ -1398,57 +1410,61 @@ struct RankDataType<ValueType, 0> {
   using type = ValueType;
 };
 
-template <unsigned N, typename... Args>
+template <ConstExprLabel Labell, unsigned N, typename... Args>
 KOKKOS_FUNCTION std::enable_if_t<
-    N == View<Args...>::rank() &&
+    N == View<Labell, Args...>::rank() &&
         std::is_same_v<typename ViewTraits<Args...>::specialize, void>,
-    View<Args...>>
-as_view_of_rank_n(View<Args...> v) {
+    View<Labell, Args...>>
+as_view_of_rank_n(View<Labell, Args...> v) {
   return v;
 }
 
 // Placeholder implementation to compile generic code for DynRankView; should
 // never be called
-template <unsigned N, typename T, typename... Args>
+template <ConstExprLabel Labell, unsigned N, typename T, typename... Args>
 KOKKOS_FUNCTION std::enable_if_t<
-    N != View<T, Args...>::rank() &&
+    N != View<Labell, T, Args...>::rank() &&
         std::is_same_v<typename ViewTraits<T, Args...>::specialize, void>,
-    View<typename RankDataType<typename View<T, Args...>::value_type, N>::type,
+    View<Labell,
+         typename RankDataType<typename View<Labell, T, Args...>::value_type,
+                               N>::type,
          Args...>>
-as_view_of_rank_n(View<T, Args...>) {
+as_view_of_rank_n(View<Labell, T, Args...>) {
   Kokkos::abort("Trying to get at a View of the wrong rank");
   return {};
 }
 
-template <typename Function, typename... Args>
-void apply_to_view_of_static_rank(Function&& f, View<Args...> a) {
+template <ConstExprLabel Labell, typename Function, typename... Args>
+void apply_to_view_of_static_rank(Function&& f, View<Labell, Args...> a) {
   f(a);
 }
 
 }  // namespace Impl
 
-template <class D, class... P, class... Args>
-KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src, Args... args) {
-  static_assert(View<D, P...>::rank == sizeof...(Args),
+template <ConstExprLabel Labell, class D, class... P, class... Args>
+KOKKOS_INLINE_FUNCTION auto subview(const View<Labell, D, P...>& src,
+                                    Args... args) {
+  static_assert(View<Labell, D, P...>::rank == sizeof...(Args),
                 "subview requires one argument for each source View rank");
 
   return typename Kokkos::Impl::ViewMapping<
-      void /* deduce subview type from source view traits */
+      Labell, void /* deduce subview type from source view traits */
       ,
       typename Impl::RemoveAlignedMemoryTrait<D, P...>::type,
       Args...>::type(src, args...);
 }
 
 #ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-template <class MemoryTraits, class D, class... P, class... Args>
-KOKKOS_DEPRECATED KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src,
-                                                      Args... args) {
-  static_assert(View<D, P...>::rank == sizeof...(Args),
+template <ConstExprLabel Labell, class MemoryTraits, class D, class... P,
+          class... Args>
+KOKKOS_DEPRECATED KOKKOS_INLINE_FUNCTION auto subview(
+    const View<Labell, D, P...>& src, Args... args) {
+  static_assert(View<Labell, D, P...>::rank == sizeof...(Args),
                 "subview requires one argument for each source View rank");
   static_assert(Kokkos::is_memory_traits<MemoryTraits>::value);
 
   return typename Kokkos::Impl::ViewMapping<
-      void /* deduce subview type from source view traits */
+      Labell, void /* deduce subview type from source view traits */
       ,
       typename Impl::RemoveAlignedMemoryTrait<D, P..., MemoryTraits>::type,
       Args...>::type(src, args...);
@@ -1465,9 +1481,9 @@ using Subview = decltype(subview(std::declval<V>(), std::declval<Args>()...));
 
 namespace Kokkos {
 
-template <class LT, class... LP, class RT, class... RP>
-KOKKOS_INLINE_FUNCTION bool operator==(const View<LT, LP...>& lhs,
-                                       const View<RT, RP...>& rhs) {
+template <ConstExprLabel Labell, class LT, class... LP, class RT, class... RP>
+KOKKOS_INLINE_FUNCTION bool operator==(const View<Labell, LT, LP...>& lhs,
+                                       const View<Labell, RT, RP...>& rhs) {
   // Same data, layout, dimensions
   using lhs_traits = ViewTraits<LT, LP...>;
   using rhs_traits = ViewTraits<RT, RP...>;
@@ -1478,7 +1494,7 @@ KOKKOS_INLINE_FUNCTION bool operator==(const View<LT, LP...>& lhs,
                         typename rhs_traits::array_layout> &&
          std::is_same_v<typename lhs_traits::memory_space,
                         typename rhs_traits::memory_space> &&
-         View<LT, LP...>::rank() == View<RT, RP...>::rank() &&
+         View<Labell, LT, LP...>::rank() == View<Labell, RT, RP...>::rank() &&
          lhs.data() == rhs.data() && lhs.span() == rhs.span() &&
          lhs.extent(0) == rhs.extent(0) && lhs.extent(1) == rhs.extent(1) &&
          lhs.extent(2) == rhs.extent(2) && lhs.extent(3) == rhs.extent(3) &&
@@ -1486,9 +1502,9 @@ KOKKOS_INLINE_FUNCTION bool operator==(const View<LT, LP...>& lhs,
          lhs.extent(6) == rhs.extent(6) && lhs.extent(7) == rhs.extent(7);
 }
 
-template <class LT, class... LP, class RT, class... RP>
-KOKKOS_INLINE_FUNCTION bool operator!=(const View<LT, LP...>& lhs,
-                                       const View<RT, RP...>& rhs) {
+template <ConstExprLabel Labell, class LT, class... LP, class RT, class... RP>
+KOKKOS_INLINE_FUNCTION bool operator!=(const View<Labell, LT, LP...>& lhs,
+                                       const View<Labell, RT, RP...>& rhs) {
   return !(operator==(lhs, rhs));
 }
 

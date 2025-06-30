@@ -2535,9 +2535,9 @@ namespace Kokkos {
 namespace Impl {
 //----------------------------------------------------------------------------
 /** \brief  View mapping for non-specialized data type and standard layout */
-template <class Traits>
+template <ConstExprLabel Label, class Traits>
 class ViewMapping<
-    Traits, std::enable_if_t<(std::is_void_v<typename Traits::specialize> &&
+    Label, Traits, std::enable_if_t<(std::is_void_v<typename Traits::specialize> &&
                               ViewOffset<typename Traits::dimension,
                                          typename Traits::array_layout,
                                          void>::is_mapping_plugin::value)>> {
@@ -2551,7 +2551,7 @@ class ViewMapping<
   offset_type m_impl_offset;
 
  private:
-  template <class, class...>
+  template <ConstExprLabel, class, class...>
   friend class ViewMapping;
 
   KOKKOS_INLINE_FUNCTION
@@ -2890,9 +2890,9 @@ class ViewMapping<
 //----------------------------------------------------------------------------
 /** \brief  Assign compatible default mappings */
 
-template <class DstTraits, class SrcTraits>
+template <ConstExprLabel Label, class DstTraits, class SrcTraits>
 class ViewMapping<
-    DstTraits, SrcTraits,
+    Label, DstTraits, SrcTraits,
     std::enable_if_t<(!(std::is_same_v<typename SrcTraits::array_layout,
                                        LayoutStride>) &&  // Added to have a new
                                                           // specialization for
@@ -2959,8 +2959,8 @@ class ViewMapping<
   };
 
   using TrackType = Kokkos::Impl::SharedAllocationTracker;
-  using DstType   = ViewMapping<DstTraits, void>;
-  using SrcType   = ViewMapping<SrcTraits, void>;
+  using DstType   = ViewMapping<Label, DstTraits, void>;
+  using SrcType   = ViewMapping<Label, SrcTraits, void>;
 
   KOKKOS_INLINE_FUNCTION
   static void assign(DstType& dst, const SrcType& src,
@@ -3030,9 +3030,9 @@ class ViewMapping<
 //----------------------------------------------------------------------------
 // Create new specialization for SrcType of LayoutStride. Runtime check for
 // compatible layout
-template <class DstTraits, class SrcTraits>
+template <ConstExprLabel Label, class DstTraits, class SrcTraits>
 class ViewMapping<
-    DstTraits, SrcTraits,
+    Label, DstTraits, SrcTraits,
     std::enable_if_t<(std::is_same_v<typename SrcTraits::array_layout,
                                      Kokkos::LayoutStride> &&
                       std::is_void_v<typename DstTraits::specialize> &&
@@ -3080,8 +3080,8 @@ class ViewMapping<
   };
 
   using TrackType = Kokkos::Impl::SharedAllocationTracker;
-  using DstType   = ViewMapping<DstTraits, void>;
-  using SrcType   = ViewMapping<SrcTraits, void>;
+  using DstType   = ViewMapping<Label, DstTraits, void>;
+  using SrcType   = ViewMapping<Label, SrcTraits, void>;
 
   KOKKOS_INLINE_FUNCTION
   static bool assignable_layout_check(DstType&,
@@ -3227,8 +3227,8 @@ struct SubViewDataType : SubViewDataTypeImpl<void, ValueType, Exts, Args...> {};
 
 //----------------------------------------------------------------------------
 
-template <class SrcTraits, class... Args>
-class ViewMapping<
+template <ConstExprLabel Label, class SrcTraits, class... Args>
+class ViewMapping<Label,
     std::enable_if_t<(
         std::is_void_v<typename SrcTraits::specialize> &&
         (std::is_same_v<typename SrcTraits::array_layout, Kokkos::LayoutLeft> ||
@@ -3316,7 +3316,7 @@ class ViewMapping<
                                          typename SrcTraits::memory_traits>;
 
   using type =
-      Kokkos::View<data_type, array_layout, typename SrcTraits::device_type,
+      Kokkos::View<Label, data_type, array_layout, typename SrcTraits::device_type,
                    typename SrcTraits::memory_traits>;
 
   template <class MemoryTraits>
@@ -3327,7 +3327,7 @@ class ViewMapping<
         Kokkos::ViewTraits<data_type, array_layout,
                            typename SrcTraits::device_type, MemoryTraits>;
 
-    using type = Kokkos::View<data_type, array_layout,
+    using type = Kokkos::View<Label, data_type, array_layout,
                               typename SrcTraits::device_type, MemoryTraits>;
   };
 
@@ -3335,13 +3335,13 @@ class ViewMapping<
   // However, a compatible ViewMapping is acceptable.
   template <class DstTraits>
   KOKKOS_INLINE_FUNCTION static void assign(
-      ViewMapping<DstTraits, void>& dst,
-      ViewMapping<SrcTraits, void> const& src, Args... args) {
-    static_assert(ViewMapping<DstTraits, traits_type, void>::is_assignable,
+      ViewMapping<Label, DstTraits, void>& dst,
+      ViewMapping<Label, SrcTraits, void> const& src, Args... args) {
+    static_assert(ViewMapping<Label, DstTraits, traits_type, void>::is_assignable,
                   "Subview destination type must be compatible with subview "
                   "derived type");
 
-    using DstType = ViewMapping<DstTraits, void>;
+    using DstType = ViewMapping<Label, DstTraits, void>;
 
     using dst_offset_type = typename DstType::offset_type;
 

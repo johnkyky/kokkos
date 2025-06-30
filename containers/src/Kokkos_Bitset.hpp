@@ -71,7 +71,7 @@ class Bitset {
   };
 
   //! Type of @ref m_blocks.
-  using block_view_type = View<unsigned*, Device, MemoryTraits<RandomAccess>>;
+  using block_view_type = View<"default", unsigned*, Device, MemoryTraits<RandomAccess>>;
 
  public:
   Bitset() = default;

@@ -20,7 +20,7 @@
 namespace Kokkos {
 namespace Impl {
 
-template <typename ExecutionSpace>
+template <ConstExprLabel Labell, typename ExecutionSpace>
 struct ZeroMemset;
 
 }  // namespace Impl

@@ -150,7 +150,7 @@ struct ViewValueFunctor {
           Kokkos::Profiling::Experimental::device_id(space), &kpID);
     }
 
-    (void)ZeroMemset(space, ptr, n * sizeof(ValueType));
+    (void)ZeroMemset<"default", ExecSpace>(space, ptr, n * sizeof(ValueType));
 
     if (Kokkos::Profiling::profileLibraryLoaded()) {
       Kokkos::Profiling::endParallelFor(kpID);

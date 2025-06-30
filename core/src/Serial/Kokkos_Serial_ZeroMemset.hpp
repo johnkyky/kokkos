@@ -31,8 +31,8 @@ namespace Impl {
 // parallel execution space since the specialization for
 // DefaultHostExecutionSpace is defined elsewhere.
 struct DummyExecutionSpace;
-template <>
-struct ZeroMemset<
+template <ConstExprLabel Labell>
+struct ZeroMemset<Labell, 
     std::conditional_t<!std::is_same_v<Serial, DefaultHostExecutionSpace>,
                        Serial, DummyExecutionSpace>> {
   ZeroMemset(const Serial&, void* dst, size_t cnt) { std::memset(dst, 0, cnt); }

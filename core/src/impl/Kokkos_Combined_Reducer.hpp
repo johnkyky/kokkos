@@ -171,7 +171,7 @@ struct CombinedReducerImpl<std::integer_sequence<size_t, Idxs...>, Space,
       CombinedReducerValueImpl<std::integer_sequence<size_t, Idxs...>,
                                typename Reducers::value_type...>;
   using result_view_type =
-      Kokkos::View<value_type, Space, Kokkos::MemoryUnmanaged>;
+      Kokkos::View<"default", value_type, Space, Kokkos::MemoryUnmanaged>;
 
  private:
   result_view_type m_value_view;

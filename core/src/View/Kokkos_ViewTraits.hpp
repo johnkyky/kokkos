@@ -77,7 +77,7 @@ template <class DataType, class ArrayLayout,
               typename ViewArrayAnalysis<DataType>::non_const_value_type>
 struct ViewDataAnalysis;
 
-template <class, class...>
+template <ConstExprLabel Label, class, class...>
 class ViewMapping {
  public:
   enum : bool { is_assignable_data_type = false };
@@ -163,7 +163,7 @@ KOKKOS_INLINE_FUNCTION void runtime_check_rank(
 // Class to provide a uniform type
 namespace Kokkos {
 namespace Impl {
-template <class ViewType, int Traits = 0>
+template <ConstExprLabel Labell, class ViewType, int Traits = 0>
 struct ViewUniformType;
 }
 }  // namespace Kokkos

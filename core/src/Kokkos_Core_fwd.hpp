@@ -274,7 +274,23 @@ void fence(const std::string &name = "Kokkos::fence: Unnamed Global Fence");
 
 namespace Kokkos {
 
-template <class DataType, class... Properties>
+template <std::size_t N>
+struct ConstExprLabel {
+    char value[N];
+
+    constexpr ConstExprLabel(const char (&str)[N]) {
+        for (std::size_t i = 0; i < N; ++i)
+            value[i] = str[i];
+    }
+
+    constexpr std::string_view view() const {
+        return std::string_view(value, N - 1); // ignore '\0'
+    }
+
+    constexpr auto operator<=>(const ConstExprLabel&) const = default;
+};
+
+template <ConstExprLabel Label, class DataType, class... Properties>
 class View;
 
 namespace Impl {
