@@ -42,6 +42,9 @@ class GraphImpl<Kokkos::SYCL> {
       GraphNodeImpl<Kokkos::SYCL, aggregate_impl_t,
                     Kokkos::Experimental::TypeErasedTag>;
 
+  using native_graph_t = sycl::ext::oneapi::experimental::command_graph<
+      sycl::ext::oneapi::experimental::graph_state::modifiable>;
+
   // Not movable or copyable; it spends its whole life as a shared_ptr in the
   // Graph object.
   GraphImpl()                            = delete;
@@ -54,12 +57,19 @@ class GraphImpl<Kokkos::SYCL> {
 
   explicit GraphImpl(Kokkos::SYCL instance);
 
+  GraphImpl(Kokkos::SYCL instance, native_graph_t native_graph);
+
   void add_node(std::shared_ptr<aggregate_node_impl_t> const& arg_node_ptr);
 
   template <class NodeImpl>
   std::enable_if_t<
       Kokkos::Impl::is_graph_kernel_v<typename NodeImpl::kernel_type>>
-  add_node(std::shared_ptr<NodeImpl> const& arg_node_ptr);
+  add_node(std::shared_ptr<NodeImpl> arg_node_ptr);
+
+  template <class NodeImpl>
+  std::enable_if_t<
+      Kokkos::Impl::is_graph_capture_v<typename NodeImpl::kernel_type>>
+  add_node(const Kokkos::SYCL& exec, std::shared_ptr<NodeImpl> arg_node_ptr);
 
   template <class NodeImplPtr, class PredecessorRef>
   void add_predecessor(NodeImplPtr arg_node_ptr, PredecessorRef arg_pred_ref);
@@ -83,9 +93,7 @@ class GraphImpl<Kokkos::SYCL> {
 
  private:
   Kokkos::SYCL m_execution_space;
-  sycl::ext::oneapi::experimental::command_graph<
-      sycl::ext::oneapi::experimental::graph_state::modifiable>
-      m_graph;
+  native_graph_t m_graph;
   std::optional<sycl::ext::oneapi::experimental::command_graph<
       sycl::ext::oneapi::experimental::graph_state::executable>>
       m_graph_exec;
@@ -102,6 +110,11 @@ inline GraphImpl<Kokkos::SYCL>::GraphImpl(Kokkos::SYCL instance)
       m_graph(m_execution_space.sycl_queue().get_context(),
               m_execution_space.sycl_queue().get_device()) {}
 
+inline GraphImpl<Kokkos::SYCL>::GraphImpl(Kokkos::SYCL instance,
+                                          native_graph_t native_graph)
+    : m_execution_space(std::move(instance)),
+      m_graph(std::move(native_graph)) {}
+
 inline void GraphImpl<Kokkos::SYCL>::add_node(
     std::shared_ptr<aggregate_node_impl_t> const& arg_node_ptr) {
   // add an empty node that needs to be set up before finalizing the graph
@@ -111,8 +124,7 @@ inline void GraphImpl<Kokkos::SYCL>::add_node(
 template <class NodeImpl>
 inline std::enable_if_t<
     Kokkos::Impl::is_graph_kernel_v<typename NodeImpl::kernel_type>>
-GraphImpl<Kokkos::SYCL>::add_node(
-    std::shared_ptr<NodeImpl> const& arg_node_ptr) {
+GraphImpl<Kokkos::SYCL>::add_node(std::shared_ptr<NodeImpl> arg_node_ptr) {
   static_assert(Kokkos::Impl::is_specialization_of_v<NodeImpl, GraphNodeImpl>);
   KOKKOS_EXPECTS(arg_node_ptr);
   // The Kernel launch from the execute() method has been shimmed to insert
@@ -124,7 +136,22 @@ GraphImpl<Kokkos::SYCL>::add_node(
   kernel.set_sycl_graph_node_ptr(&node);
   kernel.execute();
   KOKKOS_ENSURES(node);
-  m_nodes.push_back(arg_node_ptr);
+  m_nodes.push_back(std::move(arg_node_ptr));
+}
+
+template <class NodeImpl>
+std::enable_if_t<
+    Kokkos::Impl::is_graph_capture_v<typename NodeImpl::kernel_type>>
+GraphImpl<Kokkos::SYCL>::add_node(const Kokkos::SYCL& exec,
+                                  std::shared_ptr<NodeImpl> arg_node_ptr) {
+  static_assert(Kokkos::Impl::is_specialization_of_v<NodeImpl, GraphNodeImpl>);
+  KOKKOS_EXPECTS(arg_node_ptr);
+
+  auto& kernel = arg_node_ptr->get_kernel();
+  kernel.capture(exec, m_graph);
+  static_cast<node_details_t*>(arg_node_ptr.get())->node = kernel.m_node;
+
+  m_nodes.push_back(std::move(arg_node_ptr));
 }
 
 // Requires PredecessorRef is a specialization of GraphNodeRef that has
@@ -143,14 +170,22 @@ inline void GraphImpl<Kokkos::SYCL>::add_predecessor(
   auto& node = arg_node_ptr->node_details_t::node;
   KOKKOS_EXPECTS(node);
 
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
   m_graph.make_edge(*pred_node, *node);
 }
 
 inline void GraphImpl<Kokkos::SYCL>::submit(const Kokkos::SYCL& exec) {
+  auto q = exec.sycl_queue();
+
+  desul::ensure_sycl_lock_arrays_on_device(q);
+
   if (!m_graph_exec) {
     instantiate();
   }
-  exec.sycl_queue().ext_oneapi_graph(*m_graph_exec);
+  KOKKOS_ASSERT(m_graph_exec);
+
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+  q.ext_oneapi_graph(*m_graph_exec);
 }
 
 inline Kokkos::SYCL const& GraphImpl<Kokkos::SYCL>::get_execution_space()

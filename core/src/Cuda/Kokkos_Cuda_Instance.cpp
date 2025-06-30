@@ -209,13 +209,18 @@ void CudaInternal::print_configuration(std::ostream &s) const {
   for (int i : get_visible_devices()) {
     cudaDeviceProp prop;
     KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGetDeviceProperties(&prop, i));
-    s << "Kokkos::Cuda[ " << i << " ] " << prop.name << " capability "
-      << prop.major << "." << prop.minor
-      << ", Total Global Memory: " << human_memory_size(prop.totalGlobalMem)
-      << ", Shared Memory per Block: "
-      << human_memory_size(prop.sharedMemPerBlock);
+    s << "Kokkos::Cuda[ " << i << " ] " << prop.name;
     if (m_cudaDev == i) s << " : Selected";
-    s << '\n';
+    s << '\n'
+      << "  Capability: " << prop.major << "." << prop.minor << '\n'
+      << "  Total Global Memory: " << human_memory_size(prop.totalGlobalMem)
+      << '\n'
+      << "  Shared Memory per Block: "
+      << human_memory_size(prop.sharedMemPerBlock) << '\n'
+      << "  Can access system allocated memory: " << prop.pageableMemoryAccess
+      << '\n'
+      << "    via Address Translation Service: "
+      << prop.pageableMemoryAccessUsesHostPageTables << '\n';
   }
 }
 
@@ -288,8 +293,8 @@ void CudaInternal::initialize(cudaStream_t stream) {
   }
 
   if (!constantMemReusablePerDevice[m_cudaDev])
-    KOKKOS_IMPL_CUDA_SAFE_CALL(
-        (cuda_event_create_wrapper(&constantMemReusablePerDevice[m_cudaDev])));
+    KOKKOS_IMPL_CUDA_SAFE_CALL(cuda_event_create_with_flags_wrapper(
+        &constantMemReusablePerDevice[m_cudaDev], cudaEventDisableTiming));
 
   //----------------------------------
   // Multiblock reduction uses scratch flags for counters
@@ -299,11 +304,10 @@ void CudaInternal::initialize(cudaStream_t stream) {
   {
     // Maximum number of warps,
     // at most one warp per thread in a warp for reduction.
-    auto const maxWarpCount = std::min<unsigned>(
-        m_deviceProp.maxThreadsPerBlock / CudaTraits::WarpSize,
-        CudaTraits::WarpSize);
-    unsigned const reduce_block_count =
-        maxWarpCount * Impl::CudaTraits::WarpSize;
+    auto const maxWarpCount =
+        std::min<size_t>(m_deviceProp.maxThreadsPerBlock / CudaTraits::WarpSize,
+                         CudaTraits::WarpSize);
+    size_t const reduce_block_count = maxWarpCount * Impl::CudaTraits::WarpSize;
 
     (void)scratch_unified(16 * sizeof(size_type));
     (void)scratch_flags(reduce_block_count * 2 * sizeof(size_type));
@@ -496,6 +500,7 @@ void CudaInternal::finalize() {
   KOKKOS_IMPL_CUDA_SAFE_CALL((cuda_free_wrapper(m_scratch_locks)));
   m_scratch_locks     = nullptr;
   m_num_scratch_locks = 0;
+  m_cudaDev           = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -730,9 +735,7 @@ uint32_t Cuda::impl_instance_id() const noexcept {
   return m_space_instance->impl_get_instance_id();
 }
 
-cudaStream_t Cuda::cuda_stream() const {
-  return m_space_instance->get_stream();
-}
+cudaStream_t Cuda::cuda_stream() const { return m_space_instance->m_stream; }
 int Cuda::cuda_device() const { return m_space_instance->m_cudaDev; }
 const cudaDeviceProp &Cuda::cuda_device_prop() const {
   return m_space_instance->m_deviceProp;
@@ -754,16 +757,6 @@ std::map<int, std::mutex> CudaInternal::constantMemMutexPerDevice     = {};
 }  // namespace Impl
 
 }  // namespace Kokkos
-
-void Kokkos::Impl::create_Cuda_instances(std::vector<Cuda> &instances) {
-  for (int s = 0; s < int(instances.size()); s++) {
-    cudaStream_t stream;
-    KOKKOS_IMPL_CUDA_SAFE_CALL((
-        instances[s].impl_internal_space_instance()->cuda_stream_create_wrapper(
-            &stream)));
-    instances[s] = Cuda(stream, ManageStream::yes);
-  }
-}
 
 #else
 

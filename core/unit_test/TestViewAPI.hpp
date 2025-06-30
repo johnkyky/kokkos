@@ -880,15 +880,15 @@ struct TestViewMirror {
   }
 
   void static testit() {
-    test_mirror<Kokkos::MemoryTraits<0> >();
+    test_mirror<Kokkos::MemoryTraits<> >();
     test_mirror<Kokkos::MemoryTraits<Kokkos::Unmanaged> >();
-    test_mirror_view<Kokkos::MemoryTraits<0> >();
+    test_mirror_view<Kokkos::MemoryTraits<> >();
     test_mirror_view<Kokkos::MemoryTraits<Kokkos::Unmanaged> >();
-    test_mirror_copy<Kokkos::MemoryTraits<0> >();
+    test_mirror_copy<Kokkos::MemoryTraits<> >();
     test_mirror_copy<Kokkos::MemoryTraits<Kokkos::Unmanaged> >();
     test_mirror_copy_const_data_type();
     test_allocated();
-    test_mirror_no_initialize<Kokkos::MemoryTraits<0> >();
+    test_mirror_no_initialize<Kokkos::MemoryTraits<> >();
     test_mirror_no_initialize<Kokkos::MemoryTraits<Kokkos::Unmanaged> >();
   }
 };
@@ -1423,7 +1423,7 @@ class TestViewAPI {
     // an lvalue reference due to retrieving through texture cache
     // therefore not allowed to query the underlying pointer.
 #if defined(KOKKOS_ENABLE_CUDA)
-    if (!std::is_same<typename device::execution_space, Kokkos::Cuda>::value)
+    if (!std::is_same_v<typename device::execution_space, Kokkos::Cuda>)
 #endif
     {
       ASSERT_EQ(x.data(), xr.data());

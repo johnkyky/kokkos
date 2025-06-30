@@ -214,6 +214,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
 
+    // <<<<<<< HEAD
     if constexpr (Polly) {
       const typename Kokkos::Impl::HostIterate<
           StrAssumption, MDRangePolicy, FunctorType,
@@ -227,7 +228,6 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
       exec_range(0, m_iter.m_rp.m_num_tiles);
       return;
     }
-#endif
 
 #ifndef KOKKOS_INTERNAL_DISABLE_NATIVE_OPENMP
     execute_parallel<Policy>();

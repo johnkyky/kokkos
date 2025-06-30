@@ -25,6 +25,10 @@ namespace Kokkos {
 
 namespace Experimental {
 
+namespace simd_abi {
+class scalar;
+}
+
 template <class T, class Abi>
 class basic_simd;
 
@@ -100,7 +104,7 @@ class where_expression<bool, T> : public const_where_expression<bool, T> {
 };
 
 template <class T, class Abi>
-[[nodiscard]] KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
     where_expression<basic_simd_mask<T, Abi>, basic_simd<T, Abi>>
     where(typename basic_simd<T, Abi>::mask_type const& mask,
           basic_simd<T, Abi>& value) {
@@ -108,7 +112,7 @@ template <class T, class Abi>
 }
 
 template <class T, class Abi>
-[[nodiscard]] KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
     const_where_expression<basic_simd_mask<T, Abi>, basic_simd<T, Abi>>
     where(typename basic_simd<T, Abi>::mask_type const& mask,
           basic_simd<T, Abi> const& value) {
@@ -116,13 +120,13 @@ template <class T, class Abi>
 }
 
 template <class T>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION where_expression<bool, T> where(
-    bool mask, T& value) {
+KOKKOS_FORCEINLINE_FUNCTION where_expression<bool, T> where(bool mask,
+                                                            T& value) {
   return where_expression(mask, value);
 }
 
 template <class T>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION const_where_expression<bool, T> where(
+KOKKOS_FORCEINLINE_FUNCTION const_where_expression<bool, T> where(
     bool mask, T const& value) {
   return const_where_expression(mask, value);
 }
@@ -135,7 +139,7 @@ template <class T>
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator+(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator+(
     Experimental::basic_simd<T, Abi> const& lhs, U rhs) {
   using result_member = decltype(lhs[0] + rhs);
   return Experimental::basic_simd<result_member, Abi>(lhs) +
@@ -144,15 +148,17 @@ template <class T, class U, class Abi,
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator+(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator+(
     U lhs, Experimental::basic_simd<T, Abi> const& rhs) {
   using result_member = decltype(lhs + rhs[0]);
   return Experimental::basic_simd<result_member, Abi>(lhs) +
          Experimental::basic_simd<result_member, Abi>(rhs);
 }
 
-template <class T, class U, class Abi>
-KOKKOS_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator+=(
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator+=(
     basic_simd<T, Abi>& lhs, U&& rhs) {
   lhs = lhs + std::forward<U>(rhs);
   return lhs;
@@ -167,7 +173,7 @@ KOKKOS_FORCEINLINE_FUNCTION where_expression<M, T>& operator+=(
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator-(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator-(
     Experimental::basic_simd<T, Abi> const& lhs, U rhs) {
   using result_member = decltype(lhs[0] - rhs);
   return Experimental::basic_simd<result_member, Abi>(lhs) -
@@ -176,22 +182,24 @@ template <class T, class U, class Abi,
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator-(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator-(
     U lhs, Experimental::basic_simd<T, Abi> const& rhs) {
   using result_member = decltype(lhs - rhs[0]);
   return Experimental::basic_simd<result_member, Abi>(lhs) -
          Experimental::basic_simd<result_member, Abi>(rhs);
 }
 
-template <class T, class U, class Abi>
-KOKKOS_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator-=(
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator-=(
     basic_simd<T, Abi>& lhs, U&& rhs) {
   lhs = lhs - std::forward<U>(rhs);
   return lhs;
 }
 
 template <class M, class T, class U>
-KOKKOS_FORCEINLINE_FUNCTION where_expression<M, T>& operator-=(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION where_expression<M, T>& operator-=(
     where_expression<M, T>& lhs, U&& rhs) {
   lhs = lhs.value() - std::forward<U>(rhs);
   return lhs;
@@ -199,7 +207,7 @@ KOKKOS_FORCEINLINE_FUNCTION where_expression<M, T>& operator-=(
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator*(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator*(
     Experimental::basic_simd<T, Abi> const& lhs, U rhs) {
   using result_member = decltype(lhs[0] * rhs);
   return Experimental::basic_simd<result_member, Abi>(lhs) *
@@ -208,30 +216,41 @@ template <class T, class U, class Abi,
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator*(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator*(
     U lhs, Experimental::basic_simd<T, Abi> const& rhs) {
   using result_member = decltype(lhs * rhs[0]);
   return Experimental::basic_simd<result_member, Abi>(lhs) *
          Experimental::basic_simd<result_member, Abi>(rhs);
 }
 
-template <class T, class U, class Abi>
-KOKKOS_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator*=(
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator*=(
     basic_simd<T, Abi>& lhs, U&& rhs) {
   lhs = lhs * std::forward<U>(rhs);
   return lhs;
 }
 
 template <class M, class T, class U>
-KOKKOS_FORCEINLINE_FUNCTION where_expression<M, T>& operator*=(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION where_expression<M, T>& operator*=(
     where_expression<M, T>& lhs, U&& rhs) {
   lhs = lhs.value() * std::forward<U>(rhs);
   return lhs;
 }
 
+template <class T, class Abi,
+          std::enable_if_t<std::is_integral_v<T>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator/(
+    Experimental::basic_simd<T, Abi> const& lhs,
+    Experimental::basic_simd<T, Abi> const& rhs) {
+  return Experimental::basic_simd<T, Abi>(
+      [&](std::size_t i) { return lhs[i] / rhs[i]; });
+}
+
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator/(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator/(
     Experimental::basic_simd<T, Abi> const& lhs, U rhs) {
   using result_member = decltype(lhs[0] / rhs);
   return Experimental::basic_simd<result_member, Abi>(lhs) /
@@ -240,66 +259,85 @@ template <class T, class U, class Abi,
 
 template <class T, class U, class Abi,
           std::enable_if_t<std::is_arithmetic_v<U>, bool> = false>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto operator/(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION auto operator/(
     U lhs, Experimental::basic_simd<T, Abi> const& rhs) {
   using result_member = decltype(lhs / rhs[0]);
   return Experimental::basic_simd<result_member, Abi>(lhs) /
          Experimental::basic_simd<result_member, Abi>(rhs);
 }
 
-template <class T, class U, class Abi>
-KOKKOS_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator/=(
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator/=(
     basic_simd<T, Abi>& lhs, U&& rhs) {
   lhs = lhs / std::forward<U>(rhs);
   return lhs;
 }
 
 template <class M, class T, class U>
-KOKKOS_FORCEINLINE_FUNCTION where_expression<M, T>& operator/=(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION where_expression<M, T>& operator/=(
     where_expression<M, T>& lhs, U&& rhs) {
   lhs = lhs.value() / std::forward<U>(rhs);
+  return lhs;
+}
+
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator>>=(
+    basic_simd<T, Abi>& lhs, U&& rhs) {
+  lhs = lhs >> std::forward<U>(rhs);
+  return lhs;
+}
+
+template <
+    class T, class U, class Abi,
+    std::enable_if_t<!std::is_same_v<Abi, simd_abi::scalar>, bool> = false>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd<T, Abi>& operator<<=(
+    basic_simd<T, Abi>& lhs, U&& rhs) {
+  lhs = lhs << std::forward<U>(rhs);
   return lhs;
 }
 
 // implement mask reductions for type bool to allow generic code to accept
 // both basic_simd<double, Abi> and just double
 
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION constexpr bool all_of(bool a) {
-  return a;
-}
+KOKKOS_FORCEINLINE_FUNCTION bool all_of(bool a) { return a; }
 
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION constexpr bool any_of(bool a) {
-  return a;
-}
+KOKKOS_FORCEINLINE_FUNCTION bool any_of(bool a) { return a; }
 
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION constexpr bool none_of(bool a) {
-  return !a;
-}
+KOKKOS_FORCEINLINE_FUNCTION bool none_of(bool a) { return !a; }
 
 // fallback implementations of reductions across basic_simd_mask:
 
 template <class T, class Abi>
-[[nodiscard]] KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool all_of(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool all_of(
     basic_simd_mask<T, Abi> const& a) {
-  return a == basic_simd_mask<T, Abi>(true);
+  for (size_t i = 0; i < basic_simd_mask<T, Abi>::size(); ++i) {
+    if (!a[i]) return false;
+  }
+  return true;
 }
 
 template <class T, class Abi>
-[[nodiscard]] KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool any_of(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool any_of(
     basic_simd_mask<T, Abi> const& a) {
-  return a != basic_simd_mask<T, Abi>(false);
+  for (size_t i = 0; i < basic_simd_mask<T, Abi>::size(); ++i) {
+    if (a[i]) return true;
+  }
+  return false;
 }
 
 template <class T, class Abi>
-[[nodiscard]] KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool none_of(
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION bool none_of(
     basic_simd_mask<T, Abi> const& a) {
-  return a == basic_simd_mask<T, Abi>(false);
+  return !any_of(a);
 }
 
 // A temporary device-callable implemenation of round half to nearest even
 template <typename T>
-[[nodiscard]] KOKKOS_FORCEINLINE_FUNCTION auto round_half_to_nearest_even(
-    T const& x) {
+KOKKOS_FORCEINLINE_FUNCTION auto round_half_to_nearest_even(T const& x) {
   auto ceil  = Kokkos::ceil(x);
   auto floor = Kokkos::floor(x);
 
@@ -308,6 +346,69 @@ template <typename T>
     return (rem == 0) ? ceil : floor;
   }
   return Kokkos::round(x);
+}
+
+namespace Impl {
+
+template <class BinaryOperation>
+struct is_basic_reduction_op {
+  static constexpr bool value =
+      std::is_same_v<BinaryOperation, std::plus<>> ||
+      std::is_same_v<BinaryOperation, std::multiplies<>> ||
+      std::is_same_v<BinaryOperation, std::bit_and<>> ||
+      std::is_same_v<BinaryOperation, std::bit_or<>> ||
+      std::is_same_v<BinaryOperation, std::bit_xor<>>;
+};
+
+template <class BinaryOperation>
+constexpr bool is_basic_reduction_op_v =
+    is_basic_reduction_op<BinaryOperation>::value;
+
+template <class T, class BinaryOperation>
+struct Identity {
+  KOKKOS_FORCEINLINE_FUNCTION
+  constexpr operator T() {
+    // NOLINTNEXTLINE(bugprone-branch-clone)
+    if constexpr (std::is_same_v<BinaryOperation, std::plus<>>) {
+      return T();
+    } else if constexpr (std::is_same_v<BinaryOperation, std::multiplies<>>) {
+      return T(1);
+    } else if constexpr (std::is_same_v<BinaryOperation, std::bit_and<>>) {
+      return T(~T());
+    } else if constexpr (std::is_same_v<BinaryOperation, std::bit_or<>>) {
+      return T();
+    } else if constexpr (std::is_same_v<BinaryOperation, std::bit_xor<>>) {
+      return T();
+    } else {
+      return T();
+    }
+    // NOLINTNEXTLINE(bugprone-branch-clone)
+  }
+};
+
+}  // namespace Impl
+
+// common implementations of host only simd reductions:
+template <class T, class Abi, class BinaryOperation = std::plus<>>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION T reduce(const basic_simd<T, Abi>& x,
+                                               BinaryOperation binary_op = {}) {
+  T result = x[0];
+  for (std::size_t i = 1; i < x.size(); ++i) {
+    result = binary_op(result, x[i]);
+  }
+  return result;
+}
+
+template <class T, class Abi>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION T
+reduce_min(const basic_simd<T, Abi>& x) noexcept {
+  return reduce_min(x, typename basic_simd<T, Abi>::mask_type(true));
+}
+
+template <class T, class Abi>
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION T
+reduce_max(const basic_simd<T, Abi>& x) noexcept {
+  return reduce_max(x, typename basic_simd<T, Abi>::mask_type(true));
 }
 
 }  // namespace Experimental
