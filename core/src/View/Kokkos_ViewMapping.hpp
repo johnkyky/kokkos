@@ -2537,10 +2537,11 @@ namespace Impl {
 /** \brief  View mapping for non-specialized data type and standard layout */
 template <ConstExprLabel Label, class Traits>
 class ViewMapping<
-    Label, Traits, std::enable_if_t<(std::is_void_v<typename Traits::specialize> &&
-                              ViewOffset<typename Traits::dimension,
-                                         typename Traits::array_layout,
-                                         void>::is_mapping_plugin::value)>> {
+    Label, Traits,
+    std::enable_if_t<(
+        std::is_void_v<typename Traits::specialize> &&
+        ViewOffset<typename Traits::dimension, typename Traits::array_layout,
+                   void>::is_mapping_plugin::value)>> {
  public:
   using offset_type = ViewOffset<typename Traits::dimension,
                                  typename Traits::array_layout, void>;
@@ -3228,7 +3229,8 @@ struct SubViewDataType : SubViewDataTypeImpl<void, ValueType, Exts, Args...> {};
 //----------------------------------------------------------------------------
 
 template <ConstExprLabel Label, class SrcTraits, class... Args>
-class ViewMapping<Label,
+class ViewMapping<
+    Label,
     std::enable_if_t<(
         std::is_void_v<typename SrcTraits::specialize> &&
         (std::is_same_v<typename SrcTraits::array_layout, Kokkos::LayoutLeft> ||
@@ -3315,9 +3317,9 @@ class ViewMapping<Label,
                                          typename SrcTraits::device_type,
                                          typename SrcTraits::memory_traits>;
 
-  using type =
-      Kokkos::View<Label, data_type, array_layout, typename SrcTraits::device_type,
-                   typename SrcTraits::memory_traits>;
+  using type = Kokkos::View<Label, data_type, array_layout,
+                            typename SrcTraits::device_type,
+                            typename SrcTraits::memory_traits>;
 
   template <class MemoryTraits>
   struct apply {
@@ -3337,9 +3339,10 @@ class ViewMapping<Label,
   KOKKOS_INLINE_FUNCTION static void assign(
       ViewMapping<Label, DstTraits, void>& dst,
       ViewMapping<Label, SrcTraits, void> const& src, Args... args) {
-    static_assert(ViewMapping<Label, DstTraits, traits_type, void>::is_assignable,
-                  "Subview destination type must be compatible with subview "
-                  "derived type");
+    static_assert(
+        ViewMapping<Label, DstTraits, traits_type, void>::is_assignable,
+        "Subview destination type must be compatible with subview "
+        "derived type");
 
     using DstType = ViewMapping<Label, DstTraits, void>;
 
