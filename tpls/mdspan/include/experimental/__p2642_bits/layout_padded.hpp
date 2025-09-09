@@ -753,6 +753,20 @@ public:
     }
   }
 
+  template <size_t... Ranks, class... IndexOffsets>
+  MDSPAN_INLINE_FUNCTION constexpr void
+  annotate_size(std::index_sequence<Ranks...>,
+                 IndexOffsets... index_offsets) const {
+    if constexpr (sizeof...(Ranks) == 1) {
+      __builtin_annotation(exts.extent(extents_type::rank() - 1), "dim");
+    } else {
+      (((extents_type::rank() - 1 - Ranks) == extent_to_pad_idx ? 
+              __builtin_annotation(padded_stride.value(0), "dim") :
+              __builtin_annotation(exts.extent(extents_type::rank() - 1 - Ranks), "dim")),
+      ...);
+    }
+  }
+
   /**
    * Return the mapping given the provided indices per rank.
    *
@@ -768,6 +782,7 @@ public:
                            are_valid_indices<index_type, Indices...>())))
   MDSPAN_INLINE_FUNCTION constexpr size_t
   operator()(Indices... idxs) const noexcept {
+    annotate_size(std::index_sequence_for<Indices...>{}, idxs...);
     return compute_offset(std::index_sequence_for<Indices...>{}, idxs...);
   }
 

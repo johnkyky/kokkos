@@ -144,8 +144,8 @@ KOKKOS_INLINE_FUNCTION constexpr auto accessor_from_mapping_and_accessor_arg(
 // This was already exhibited in some Kokkos functions that were named the same
 // in both Kokkos:: and Kokkos::Impl:: namespaces and caused an ambiguous call
 namespace BV {
-template <class ElementType, class Extents, class LayoutPolicy,
-          class AccessorPolicy>
+template <ConstExprLabel Labell, class ElementType, class Extents,
+          class LayoutPolicy, class AccessorPolicy>
 class BasicView {
  public:
   using mdspan_type =
@@ -296,10 +296,11 @@ class BasicView {
                                       const accessor_type &a)
       : m_ptr(std::move(p)), m_map(m), m_acc(a) {}
 
-  template <class OtherT, class OtherE, class OtherL, class OtherA,
+  template <ConstExprLabel OtherLabell, class OtherT, class OtherE,
+            class OtherL, class OtherA,
             typename = std::enable_if_t<std::is_constructible_v<
-                mdspan_type, typename BasicView<OtherT, OtherE, OtherL,
-                                                OtherA>::mdspan_type>>>
+                mdspan_type, typename BasicView<OtherLabell, OtherT, OtherE,
+                                                OtherL, OtherA>::mdspan_type>>>
 //    requires(std::is_constructible_v<mdspan_type,
 //                                     typename BasicView<OtherT, OtherE,
 //                                     OtherL,
@@ -310,8 +311,8 @@ class BasicView {
                              mapping_type> ||
       !std::is_convertible_v<const OtherA &, accessor_type>)
 #endif
-      KOKKOS_INLINE_FUNCTION
-      BasicView(const BasicView<OtherT, OtherE, OtherL, OtherA> &other)
+      KOKKOS_INLINE_FUNCTION BasicView(
+          const BasicView<OtherLabell, OtherT, OtherE, OtherL, OtherA> &other)
       : m_ptr(other.m_ptr), m_map(other.m_map), m_acc(other.m_acc) {
     // Kokkos View precondition checks happen in release builds
     check_basic_view_constructibility(other.mapping());
@@ -514,12 +515,13 @@ class BasicView {
             arg_mapping) {}
 
  protected:
-  template <class OtherElementType, class OtherExtents, class OtherLayoutPolicy,
+  template <ConstExprLabel OtherLabell, class OtherElementType,
+            class OtherExtents, class OtherLayoutPolicy,
             class OtherAccessorPolicy, class... SliceSpecifiers>
   KOKKOS_INLINE_FUNCTION BasicView(
       Impl::SubViewCtorTag,
-      const BasicView<OtherElementType, OtherExtents, OtherLayoutPolicy,
-                      OtherAccessorPolicy> &src_view,
+      const BasicView<OtherLabell, OtherElementType, OtherExtents,
+                      OtherLayoutPolicy, OtherAccessorPolicy> &src_view,
       SliceSpecifiers... slices)
       : BasicView(submdspan(
             src_view.to_mdspan(),
@@ -545,8 +547,8 @@ class BasicView {
   // compilers
   template <class OtherAccessorType = AccessorPolicy,
             typename                = std::enable_if_t<std::is_constructible_v<
-                typename mdspan_type::data_handle_type,
-                typename OtherAccessorType::data_handle_type>>>
+                               typename mdspan_type::data_handle_type,
+                               typename OtherAccessorType::data_handle_type>>>
   KOKKOS_INLINE_FUNCTION constexpr auto to_mdspan() const {
     using ret_mdspan_type =
         mdspan<typename mdspan_type::element_type,
@@ -561,7 +563,7 @@ class BasicView {
   template <
       class OtherAccessorType = AccessorPolicy,
       typename                = std::enable_if_t<std::is_assignable_v<
-          data_handle_type, typename OtherAccessorType::data_handle_type>>>
+                         data_handle_type, typename OtherAccessorType::data_handle_type>>>
   KOKKOS_INLINE_FUNCTION constexpr auto to_mdspan(
       const OtherAccessorType &other_accessor) const {
     using ret_mdspan_type =
@@ -603,8 +605,11 @@ class BasicView {
   KOKKOS_FUNCTION constexpr reference operator()(
       OtherIndexTypes... indices) const {
     KOKKOS_IMPL_BASICVIEW_OPERATOR_VERIFY(indices...);
-    return m_acc.access(m_ptr,
-                        m_map(static_cast<index_type>(std::move(indices))...));
+    __builtin_annotation((intptr_t)m_ptr.get(), "array");
+    __builtin_annotation((intptr_t)Labell.value, "name");
+    return m_acc.access(
+        m_ptr,
+        m_map.operator()(static_cast<index_type>(std::move(indices))...));
   }
 #else
   // C++17 variant of operator()
@@ -734,7 +739,7 @@ class BasicView {
   accessor_type m_acc{};
 #endif
 
-  template <class, class, class, class>
+  template <ConstExprLabel, class, class, class, class>
   friend class BasicView;
 };
 

@@ -31,14 +31,11 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   const FunctorType m_functor;
   const Policy m_policy;
 
-  template <class TagType, bool Polly, StringAssumption StrAssumption>
-  __attribute__((noinline, annotate("findscop")))
-  std::enable_if_t<std::is_void_v<TagType> and Polly>
-  exec() const {
-    // std::cerr << "ENABLE POLLY" << std::endl;
+  template <bool Polly, StringAssumption StrAssumption, class TagType,
+            std::enable_if_t<Polly and std::is_void_v<TagType>, int> = 0>
+  __attribute__((noinline, annotate("findscop"))) void exec() const {
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const typename Policy::member_type l0 = m_policy.begin();
-    __builtin_annotation(l0, StrAssumption.value);
     const typename Policy::member_type u0 = m_policy.end();
     __builtin_annotation(l0, "lower bound 0");
     __builtin_annotation(u0, "upper bound 0");
@@ -47,20 +44,38 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     }
   }
 
-  template <class TagType, bool Polly, StringAssumption StrAssumption>
-  std::enable_if_t<std::is_void_v<TagType> and !Polly> exec() const {
+  template <bool Polly, StringAssumption StrAssumption, class TagType,
+            std::enable_if_t<Polly and std::is_void_v<TagType>, int> = 0>
+  auto getExec() const noexcept {
+    const typename Policy::member_type l0 = m_policy.begin();
+    const typename Policy::member_type u0 = m_policy.end();
+
+    auto lambda = [l0, u0, this]() noexcept -> void {
+      __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+      __builtin_annotation(l0, "lower bound 0");
+      __builtin_annotation(u0, "upper bound 0");
+
+      for (typename Policy::member_type i = l0; i < u0; ++i) {
+        m_functor(i);
+      }
+    };
+    return lambda;
+  }
+
+  template <bool Polly, StringAssumption StrAssumption, class TagType,
+            std::enable_if_t<not Polly and std::is_void_v<TagType>, int> = 0>
+  void exec() const {
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
       m_functor(i);
     }
   }
 
-  template <class TagType, bool Polly, StringAssumption StrAssumption>
-  __attribute__((noinline, annotate("findscop")))
-  std::enable_if_t<!std::is_void_v<TagType> and Polly>
-  exec() const {
+  template <
+      bool Polly, StringAssumption StrAssumption, class TagType,
+      std::enable_if_t<not Polly and not std::is_void_v<TagType>, int> = 0>
+  __attribute__((noinline, annotate("findscop"))) void exec() const {
     const TagType t{};
-    // std::cerr << "ENABLE POLLY" << std::endl;
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const typename Policy::member_type l0 = m_policy.begin();
     const typename Policy::member_type u0 = m_policy.end();
@@ -71,8 +86,28 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     }
   }
 
-  template <class TagType, bool Polly, StringAssumption StrAssumption>
-  std::enable_if_t<!std::is_void_v<TagType> and !Polly> exec() const {
+  template <
+      bool Polly, StringAssumption StrAssumption, class TagType,
+      std::enable_if_t<not Polly and not std::is_void_v<TagType>, int> = 0>
+  auto getExec() const {
+    const TagType t{};
+    const typename Policy::member_type l0 = m_policy.begin();
+    const typename Policy::member_type u0 = m_policy.end();
+
+    auto lambda = [&]() -> void {
+      __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+      __builtin_annotation(l0, "lower bound 0");
+      __builtin_annotation(u0, "upper bound 0");
+      for (typename Policy::member_type i = l0; i < u0; ++i) {
+        m_functor(t, i);
+      }
+    };
+    return lambda;
+  }
+
+  template <bool Polly, StringAssumption StrAssumption, class TagType,
+            std::enable_if_t<Polly and not std::is_void_v<TagType>, int> = 0>
+  void exec() const {
     const TagType t{};
     const typename Policy::member_type e = m_policy.end();
     for (typename Policy::member_type i = m_policy.begin(); i < e; ++i) {
@@ -92,7 +127,13 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     auto* internal_instance = m_policy.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->template exec<typename Policy::work_tag, Polly, StrAssumption>();
+    this->template exec<Polly, StrAssumption, typename Policy::work_tag>();
+  }
+
+  template <bool Polly, StringAssumption StrAssumption>
+  inline auto getExecute() const noexcept {
+    return this
+        ->template getExec<Polly, StrAssumption, typename Policy::work_tag>();
   }
 
   inline ParallelFor(const FunctorType& arg_functor, const Policy& arg_policy)

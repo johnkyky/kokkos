@@ -106,7 +106,7 @@ constexpr bool is_assignable(const Kokkos::View<LabelDst, ViewTDst...>& dst,
 }
 
 namespace Impl {
-template <class... Properties>
+template <ConstExprLabel Labell, class... Properties>
 struct BasicViewFromTraits {
   using view_traits        = ViewTraits<Properties...>;
   using mdspan_view_traits = MDSpanViewTraits<view_traits>;
@@ -115,8 +115,8 @@ struct BasicViewFromTraits {
   using layout_type        = typename mdspan_view_traits::mdspan_layout_type;
   using accessor_type      = typename mdspan_view_traits::accessor_type;
 
-  using type =
-      BV::BasicView<element_type, extents_type, layout_type, accessor_type>;
+  using type = BV::BasicView<Labell, element_type, extents_type, layout_type,
+                             accessor_type>;
 };
 
 // Helper function to deal with cases where the data handle is
@@ -151,7 +151,8 @@ template <class T>
 inline constexpr bool is_view_v = is_view<T>::value;
 
 template <ConstExprLabel Labell, class DataType, class... Properties>
-class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
+class View
+    : public Impl::BasicViewFromTraits<Labell, DataType, Properties...>::type {
   // We are deriving from BasicView, but need a helper to translate
   // View template parameters to BasicView template parameters
  private:
@@ -161,7 +162,7 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
   friend struct Kokkos::Impl::ViewTracker;
 
   using base_t =
-      typename Impl::BasicViewFromTraits<DataType, Properties...>::type;
+      typename Impl::BasicViewFromTraits<Labell, DataType, Properties...>::type;
 
  public:
   using base_t::base_t;

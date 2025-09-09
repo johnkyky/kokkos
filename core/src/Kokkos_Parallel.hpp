@@ -236,7 +236,6 @@ inline void multi_parallel_for(const std::string& str,
   auto f1 = closure1.template getExecute<Polly, StrAssumption>();
   auto f2 = closure2.template getExecute<Polly, StrAssumption>();
 
-  using IType = typename ExecPolicy1::index_type;
   call_for_multi_parallel_for(f1, f2);
 }
 }  // namespace Kokkos
