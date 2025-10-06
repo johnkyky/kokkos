@@ -443,18 +443,21 @@ namespace Impl {
 // ------------------------------------------------------------------ //
 
 /* Structs for calling loops */
-template <StringAssumption StrAssumption, int Rank, typename IType, bool IsLeft,
-          typename Tagged>
+template <StringAssumption StrAssumption, StringAssumption Backend, int Rank,
+          typename IType, bool IsLeft, typename Tagged>
 struct Loop_Type;
 
 // Rank = 2 non tagged Right layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 2, IType, /*LayoutRight*/ false,
+                 void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
@@ -479,6 +482,7 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, void> {
     const IType l0 = (IType)lower[1];
     const IType u0 = static_cast<IType>(upper[1]);
     auto lambda    = [=]() -> void {
+      __builtin_annotation((intptr_t)Backend.value, "Backend");
       __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
       __builtin_annotation(l1, "lower bound 0");
       __builtin_annotation(u1, "upper bound 0");
@@ -496,6 +500,7 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
@@ -513,13 +518,15 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, void> {
 };
 
 // Rank = 2 non tagged Left layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 2, IType, /*LayoutLeft*/ true, void> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
@@ -540,6 +547,7 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
@@ -557,13 +565,16 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, void> {
 };
 
 // Rank = 2 tagged Right layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 2, IType, /*LayoutRight*/ false,
+                 Tagged> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
@@ -584,6 +595,7 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[0];
     const IType u1 = static_cast<IType>(upper[0]);
@@ -601,13 +613,16 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutRight*/ false, Tagged> {
 };
 
 // Rank = 2 tagged Left layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 2, IType, /*LayoutLeft*/ true,
+                 Tagged> {
   /* ParallelFor */
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
@@ -628,6 +643,7 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l1 = (IType)lower[1];
     const IType u1 = static_cast<IType>(upper[1]);
@@ -645,12 +661,15 @@ struct Loop_Type<StrAssumption, 2, IType, /*LayoutLeft*/ true, Tagged> {
 };
 
 // Rank = 3 non tagged Right layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 3, IType, /*LayoutRight*/ false,
+                 void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
@@ -674,6 +693,7 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
@@ -695,12 +715,14 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, void> {
 };
 
 // Rank = 3 non tagged Left layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 3, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
@@ -724,6 +746,7 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
@@ -745,12 +768,15 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, void> {
 };
 
 // Rank = 3 tagged Right layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 3, IType, /*LayoutRight*/ false,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
@@ -774,6 +800,7 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[0];
     const IType u2 = static_cast<IType>(upper[0]);
@@ -796,12 +823,15 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutRight*/ false, Tagged> {
 };
 
 // Rank = 3 tagged Left layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 3, IType, /*LayoutLeft*/ true,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
@@ -825,6 +855,7 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l2 = (IType)lower[2];
     const IType u2 = static_cast<IType>(upper[2]);
@@ -847,12 +878,15 @@ struct Loop_Type<StrAssumption, 3, IType, /*LayoutLeft*/ true, Tagged> {
 };
 
 // Rank = 4 non tagged Right layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 4, IType, /*LayoutRight*/ false,
+                 void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
@@ -880,6 +914,7 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
@@ -905,12 +940,14 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, void> {
 };
 
 // Rank = 4 non tagged Left layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 4, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
@@ -938,6 +975,7 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
@@ -963,12 +1001,15 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, void> {
 };
 
 // Rank = 4 tagged Right layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 4, IType, /*LayoutRight*/ false,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
@@ -997,6 +1038,7 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[0];
     const IType u3 = static_cast<IType>(upper[0]);
@@ -1023,12 +1065,15 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutRight*/ false, Tagged> {
 };
 
 // Rank = 4 tagged Left layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 4, IType, /*LayoutLeft*/ true,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
@@ -1057,6 +1102,7 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l3 = (IType)lower[3];
     const IType u3 = static_cast<IType>(upper[3]);
@@ -1083,12 +1129,15 @@ struct Loop_Type<StrAssumption, 4, IType, /*LayoutLeft*/ true, Tagged> {
 };
 
 // Rank = 5 non tagged Right layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 5, IType, /*LayoutRight*/ false,
+                 void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
@@ -1120,6 +1169,7 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
@@ -1150,12 +1200,14 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, void> {
 };
 
 // Rank = 5 non tagged Left layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 5, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
@@ -1187,6 +1239,7 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
@@ -1217,12 +1270,15 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, void> {
 };
 
 // Rank = 5 tagged Right layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 5, IType, /*LayoutRight*/ false,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
@@ -1255,6 +1311,7 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[0];
     const IType u4 = static_cast<IType>(upper[0]);
@@ -1285,12 +1342,15 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutRight*/ false, Tagged> {
 };
 
 // Rank = 5 tagged Left layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 5, IType, /*LayoutLeft*/ true,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
@@ -1323,6 +1383,7 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l4 = (IType)lower[4];
     const IType u4 = static_cast<IType>(upper[4]);
@@ -1353,12 +1414,15 @@ struct Loop_Type<StrAssumption, 5, IType, /*LayoutLeft*/ true, Tagged> {
 };
 
 // Rank = 6 non tagged Right layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 6, IType, /*LayoutRight*/ false,
+                 void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
@@ -1395,6 +1459,7 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
@@ -1429,12 +1494,14 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, void> {
 };
 
 // Rank = 6 non tagged Left layout
-template <StringAssumption StrAssumption, typename IType>
-struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, void> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType>
+struct Loop_Type<StrAssumption, Backend, 6, IType, /*LayoutLeft*/ true, void> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
@@ -1471,6 +1538,7 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, void> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
@@ -1505,12 +1573,15 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, void> {
 };
 
 // Rank = 6 tagged Right layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 6, IType, /*LayoutRight*/ false,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
@@ -1547,6 +1618,7 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[0];
     const IType u5 = static_cast<IType>(upper[0]);
@@ -1581,12 +1653,15 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutRight*/ false, Tagged> {
 };
 
 // Rank = 6 tagged Left layout
-template <StringAssumption StrAssumption, typename IType, typename Tagged>
-struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, Tagged> {
+template <StringAssumption StrAssumption, StringAssumption Backend,
+          typename IType, typename Tagged>
+struct Loop_Type<StrAssumption, Backend, 6, IType, /*LayoutLeft*/ true,
+                 Tagged> {
   template <typename Func, typename LoopBoundType>
   __attribute__((noinline, annotate("findscop"))) static void apply(
       Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
@@ -1623,6 +1698,7 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, Tagged> {
   __attribute__((noinline, annotate("findscop"))) static void apply(
       ValType& value, Func const& func, const LoopBoundType& lower,
       const LoopBoundType& upper) {
+    __builtin_annotation((intptr_t)Backend.value, "Backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const IType l5 = (IType)lower[5];
     const IType u5 = static_cast<IType>(upper[5]);
@@ -1658,15 +1734,15 @@ struct Loop_Type<StrAssumption, 6, IType, /*LayoutLeft*/ true, Tagged> {
 
 // end Structs for calling loops
 
-template <StringAssumption StrAssumption, typename RP, typename Functor,
-          typename Tag = void, typename ValueType = void,
+template <StringAssumption StrAssumption, StringAssumption Backend, typename RP,
+          typename Functor, typename Tag = void, typename ValueType = void,
           typename Enable = void>
 struct HostIterate;
 
 // For ParallelFor
-template <StringAssumption StrAssumption, typename RP, typename Functor,
-          typename Tag, typename ValueType>
-struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, StringAssumption Backend, typename RP,
+          typename Functor, typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, Backend, RP, Functor, Tag, ValueType,
                    std::enable_if_t<std::is_void<ValueType>::value>> {
   using index_type = typename RP::index_type;
   using point_type = typename RP::point_type;
@@ -1678,14 +1754,14 @@ struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
 
   inline void operator()() const {
     // std::cout << "HostIterate ParallelFor" << std::endl;
-    Loop_Type<StrAssumption, RP::rank, index_type,
+    Loop_Type<StrAssumption, Backend, RP::rank, index_type,
               (RP::inner_direction == Iterate::Left), Tag>::apply(m_func,
                                                                   m_rp.m_lower,
                                                                   m_rp.m_upper);
   }
 
   auto getHostIterateFunction(/*RP const& rp, Functor const& func*/) const {
-    return Loop_Type<StrAssumption, RP::rank, index_type,
+    return Loop_Type<StrAssumption, Backend, RP::rank, index_type,
                      (RP::inner_direction == Iterate::Left),
                      Tag>::getApply(m_func, m_rp.m_lower, m_rp.m_upper);
   }
@@ -1697,9 +1773,9 @@ struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
 
 // For ParallelReduce
 // ValueType - scalar: For reductions
-template <StringAssumption StrAssumption, typename RP, typename Functor,
-          typename Tag, typename ValueType>
-struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, StringAssumption Backend, typename RP,
+          typename Functor, typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, Backend, RP, Functor, Tag, ValueType,
                    std::enable_if_t<!std::is_void<ValueType>::value &&
                                     !std::is_array<ValueType>::value>> {
   using index_type = typename RP::index_type;
@@ -1710,7 +1786,7 @@ struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   inline void operator()(value_type& val) const {
-    Loop_Type<StrAssumption, RP::rank, index_type,
+    Loop_Type<StrAssumption, Backend, RP::rank, index_type,
               (RP::inner_direction == Iterate::Left),
               Tag>::apply(val, m_func.get_functor(), m_rp.m_lower,
                           m_rp.m_upper);
@@ -1723,9 +1799,9 @@ struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
 // For ParallelReduce
 // Extra specialization for array reductions
 // ValueType[]: For array reductions
-template <StringAssumption StrAssumption, typename RP, typename Functor,
-          typename Tag, typename ValueType>
-struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
+template <StringAssumption StrAssumption, StringAssumption Backend, typename RP,
+          typename Functor, typename Tag, typename ValueType>
+struct HostIterate<StrAssumption, Backend, RP, Functor, Tag, ValueType,
                    std::enable_if_t<!std::is_void<ValueType>::value &&
                                     std::is_array<ValueType>::value>> {
   using index_type = typename RP::index_type;
@@ -1739,7 +1815,7 @@ struct HostIterate<StrAssumption, RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   inline void operator()(value_type& val) const {
-    Loop_Type<StrAssumption, RP::rank, index_type,
+    Loop_Type<StrAssumption, Backend, RP::rank, index_type,
               (RP::inner_direction == Iterate::Left),
               Tag>::apply(val, m_func.get_functor(), m_rp.m_lower,
                           m_rp.m_upper);

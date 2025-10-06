@@ -34,6 +34,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   template <bool Polly, StringAssumption StrAssumption, class TagType,
             std::enable_if_t<Polly and std::is_void_v<TagType>, int> = 0>
   __attribute__((noinline, annotate("findscop"))) void exec() const {
+    __builtin_annotation((intptr_t)StringAssumption("Serial").value, "backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const typename Policy::member_type l0 = m_policy.begin();
     const typename Policy::member_type u0 = m_policy.end();
@@ -51,6 +52,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     const typename Policy::member_type u0 = m_policy.end();
 
     auto lambda = [l0, u0, this]() noexcept -> void {
+      __builtin_annotation((intptr_t)StringAssumption("Serial").value,
+                           "backend");
       __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
       __builtin_annotation(l0, "lower bound 0");
       __builtin_annotation(u0, "upper bound 0");
@@ -76,6 +79,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
       std::enable_if_t<not Polly and not std::is_void_v<TagType>, int> = 0>
   __attribute__((noinline, annotate("findscop"))) void exec() const {
     const TagType t{};
+    __builtin_annotation((intptr_t)StringAssumption("Serial").value, "backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const typename Policy::member_type l0 = m_policy.begin();
     const typename Policy::member_type u0 = m_policy.end();
@@ -95,6 +99,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     const typename Policy::member_type u0 = m_policy.end();
 
     auto lambda = [&]() -> void {
+      __builtin_annotation((intptr_t)StringAssumption("Serial").value,
+                           "backend");
       __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
       __builtin_annotation(l0, "lower bound 0");
       __builtin_annotation(u0, "upper bound 0");

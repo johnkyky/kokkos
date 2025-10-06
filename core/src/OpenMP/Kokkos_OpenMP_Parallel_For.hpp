@@ -48,13 +48,14 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   using WorkTag = typename Policy::work_tag;
   using Member  = typename Policy::member_type;
 
-  OpenMPInternal *m_instance;
+  OpenMPInternal* m_instance;
   const FunctorType m_functor;
   const Policy m_policy;
 
   template <StringAssumption StrAssumption>
   __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
-      const FunctorType &functor, const Policy policy) {
+      const FunctorType& functor, const Policy policy) {
+    __builtin_annotation((intptr_t)StringAssumption("OpenMP").value, "backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const Member l0 = policy.begin();
     const Member u0 = policy.end();
@@ -66,7 +67,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     }
   }
 
-  inline static void exec_work(const FunctorType &functor, const Member iwork) {
+  inline static void exec_work(const FunctorType& functor, const Member iwork) {
     if constexpr (std::is_void_v<WorkTag>) {
       functor(iwork);
     } else {
@@ -129,7 +130,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
                      Kokkos::Dynamic>::value;
 #pragma omp parallel num_threads(m_instance->thread_pool_size())
     {
-      HostThreadTeamData &data = *(m_instance->get_thread_data());
+      HostThreadTeamData& data = *(m_instance->get_thread_data());
 
       data.set_work_partition(m_policy.end() - m_policy.begin(),
                               m_policy.chunk_size());
@@ -153,7 +154,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
 #endif
   }
 
-  inline ParallelFor(const FunctorType &arg_functor, Policy arg_policy)
+  inline ParallelFor(const FunctorType& arg_functor, Policy arg_policy)
       : m_instance(nullptr), m_functor(arg_functor), m_policy(arg_policy) {
     m_instance = arg_policy.space().impl_internal_space_instance();
   }
@@ -174,7 +175,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   using iterate_type = typename Kokkos::Impl::HostIterateTile<
       MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>;
 
-  OpenMPInternal *m_instance;
+  OpenMPInternal* m_instance;
   const iterate_type m_iter;
 
   inline void exec_range(const Member ibeg, const Member iend) const {
@@ -216,7 +217,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
     if constexpr (Polly) {
       const typename Kokkos::Impl::HostIterate<
-          StrAssumption, MDRangePolicy, FunctorType,
+          StrAssumption, "OpenMP", MDRangePolicy, FunctorType,
           typename MDRangePolicy::work_tag, void>
           iter(m_iter.m_rp, m_iter.m_func);
       iter();
@@ -236,7 +237,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
 #pragma omp parallel num_threads(m_instance->thread_pool_size())
     {
-      HostThreadTeamData &data = *(m_instance->get_thread_data());
+      HostThreadTeamData& data = *(m_instance->get_thread_data());
 
       data.set_work_partition(m_iter.m_rp.m_num_tiles, 1);
 
@@ -259,13 +260,13 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 #endif
   }
 
-  inline ParallelFor(const FunctorType &arg_functor, MDRangePolicy arg_policy)
+  inline ParallelFor(const FunctorType& arg_functor, MDRangePolicy arg_policy)
       : m_instance(nullptr), m_iter(arg_policy, arg_functor) {
     m_instance = arg_policy.space().impl_internal_space_instance();
   }
 
   template <typename Policy, typename Functor>
-  static int max_tile_size_product(const Policy &, const Functor &) {
+  static int max_tile_size_product(const Policy&, const Functor&) {
     /**
      * 1024 here is just our guess for a reasonable max tile size,
      * it isn't a hardware constraint. If people see a use for larger
@@ -299,14 +300,14 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
   using SchedTag = typename Policy::schedule_type::type;
   using Member   = typename Policy::member_type;
 
-  OpenMPInternal *m_instance;
+  OpenMPInternal* m_instance;
   const FunctorType m_functor;
   const Policy m_policy;
   const size_t m_shmem_size;
 
   template <class TagType>
   inline static std::enable_if_t<(std::is_void_v<TagType>)> exec_team(
-      const FunctorType &functor, HostThreadTeamData &data,
+      const FunctorType& functor, HostThreadTeamData& data,
       const int league_rank_begin, const int league_rank_end,
       const int league_size) {
     for (int r = league_rank_begin; r < league_rank_end;) {
@@ -324,7 +325,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
 
   template <class TagType>
   inline static std::enable_if_t<(!std::is_void_v<TagType>)> exec_team(
-      const FunctorType &functor, HostThreadTeamData &data,
+      const FunctorType& functor, HostThreadTeamData& data,
       const int league_rank_begin, const int league_rank_end,
       const int league_size) {
     const TagType t{};
@@ -373,7 +374,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
 
 #pragma omp parallel num_threads(m_instance->thread_pool_size())
     {
-      HostThreadTeamData &data = *(m_instance->get_thread_data());
+      HostThreadTeamData& data = *(m_instance->get_thread_data());
 
       const int active = data.organize_team(m_policy.team_size());
 
@@ -408,7 +409,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
     }
   }
 
-  inline ParallelFor(const FunctorType &arg_functor, const Policy &arg_policy)
+  inline ParallelFor(const FunctorType& arg_functor, const Policy& arg_policy)
       : m_instance(nullptr),
         m_functor(arg_functor),
         m_policy(arg_policy),

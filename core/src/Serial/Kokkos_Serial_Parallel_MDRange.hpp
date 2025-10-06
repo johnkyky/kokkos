@@ -40,7 +40,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   std::enable_if_t<Polly> exec() const {
     // std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
-        StrAssumption, MDRangePolicy, FunctorType,
+        StrAssumption, "Serial", MDRangePolicy, FunctorType,
         typename MDRangePolicy::work_tag, void>
         iter(m_iter.m_rp, m_iter.m_func);
 
@@ -51,7 +51,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   auto getExec() const {
     std::cerr << "ENABLE POLLY" << std::endl;
     const typename Kokkos::Impl::HostIterate<
-        StrAssumption, MDRangePolicy, FunctorType,
+        StrAssumption, "Serial", MDRangePolicy, FunctorType,
         typename MDRangePolicy::work_tag, void>
         iter(m_iter.m_rp, m_iter.m_func);
     return iter.getHostIterateFunction();
@@ -122,8 +122,9 @@ class ParallelReduce<CombinedFunctorReducerType,
   template <bool Polly>
   inline std::enable_if_t<Polly> exec(reference_type update) const {
     std::cerr << "Polly c" << std::endl;
-    Kokkos::Impl::HostIterate<"", MDRangePolicy, CombinedFunctorReducerType,
-                              WorkTag, reference_type>
+    Kokkos::Impl::HostIterate<"", "Serial", MDRangePolicy,
+                              CombinedFunctorReducerType, WorkTag,
+                              reference_type>
         iter(m_iter.m_rp, m_iter.m_func);
 
     iter(update);
