@@ -34,7 +34,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
   template <bool Polly, StringAssumption StrAssumption, class TagType,
             std::enable_if_t<Polly and std::is_void_v<TagType>, int> = 0>
   __attribute__((noinline, annotate("findscop"))) void exec() const {
-    __builtin_annotation((intptr_t)StringAssumption("Serial").value, "backend");
+    constexpr StringAssumption Backend = StringAssumption("Serial");
+    __builtin_annotation((intptr_t)Backend.value, "backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const typename Policy::member_type l0 = m_policy.begin();
     const typename Policy::member_type u0 = m_policy.end();
