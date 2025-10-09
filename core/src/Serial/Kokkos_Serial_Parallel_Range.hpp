@@ -100,8 +100,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Serial> {
     const typename Policy::member_type u0 = m_policy.end();
 
     auto lambda = [&]() -> void {
-      __builtin_annotation((intptr_t)StringAssumption("Serial").value,
-                           "backend");
+      constexpr StringAssumption Backend = StringAssumption("Serial");
+      __builtin_annotation((intptr_t)Backend.value, "backend");
       __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
       __builtin_annotation(l0, "lower bound 0");
       __builtin_annotation(u0, "upper bound 0");
