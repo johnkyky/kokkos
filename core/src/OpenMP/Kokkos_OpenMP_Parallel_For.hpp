@@ -239,6 +239,17 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
  public:
   template <bool Polly, StringAssumption StrAssumption>
+  inline auto getExecute() const {
+    assert(Polly && "Polly needs to be true to use getExecute");
+    std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
+    const typename Kokkos::Impl::HostIterate<
+        StrAssumption, "OpenMP", MDRangePolicy, FunctorType,
+        typename MDRangePolicy::work_tag, void>
+        iter(m_iter.m_rp, m_iter.m_func);
+    return iter.getHostIterateFunction();
+  }
+
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
