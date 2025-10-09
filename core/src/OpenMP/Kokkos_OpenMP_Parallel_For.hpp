@@ -19,6 +19,7 @@
 
 #include <KokkosExp_MDRangePolicy.hpp>
 #include <OpenMP/Kokkos_OpenMP_Instance.hpp>
+#include <cassert>
 #include <impl/KokkosExp_Host_Iterate.hpp>
 #include <omp.h>
 
@@ -68,6 +69,25 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     }
   }
 
+  template <StringAssumption StrAssumption>
+  __attribute__((noinline, annotate("findscop"))) inline static auto
+  getExec_range(const FunctorType& functor, const Policy policy) {
+    auto lambda = [&]() -> void {
+      constexpr StringAssumption Backend = StringAssumption("OpenMP");
+      __builtin_annotation((intptr_t)Backend.value, "backend");
+      __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+      const Member l0 = policy.begin();
+      const Member u0 = policy.end();
+      __builtin_annotation(l0, "lower bound 0");
+      __builtin_annotation(u0, "upper bound 0");
+      KOKKOS_PRAGMA_IVDEP_IF_ENABLED
+      for (auto iwork = l0; iwork < u0; ++iwork) {
+        exec_work(functor, iwork);
+      }
+    };
+    return lambda;
+  }
+
   inline static void exec_work(const FunctorType& functor, const Member iwork) {
     if constexpr (std::is_void_v<WorkTag>) {
       functor(iwork);
@@ -110,6 +130,13 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   }
 
  public:
+  template <bool Polly, StringAssumption StrAssumption>
+  inline auto getExecute() const {
+    std::lock_guard<std::mutex> lock(m_instance->m_instance_mutex);
+    assert(Polly && "Polly needs to be true to use getExecute");
+    return this->template getExec_range<StrAssumption>(m_functor, m_policy);
+  }
+
   template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     // Serialize kernels on the same execution space instance
