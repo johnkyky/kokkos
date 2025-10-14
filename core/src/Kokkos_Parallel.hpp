@@ -194,15 +194,15 @@ inline void parallel_for(const size_t work_count, const FunctorType& functor) {
 namespace Impl {
 template <class... FunctorTypes>
 __attribute__((noinline, annotate("multi_parallel_for"))) void
-call_for_multi_parallel_for(FunctorTypes... funcs) {
+call_for_parallel_for(FunctorTypes... funcs) {
   (funcs(), ...);
 }
 template <bool Polly, StringAssumption StrAssumption, class... Args,
           std::size_t... Is>
-inline void multi_parallel_for_impl(const std::string& str,
-                                    const std::tuple<Args...>& args_tuple,
-                                    std::index_sequence<Is...>) {
-  call_for_multi_parallel_for(
+inline void parallel_for_impl(const std::string& str,
+                              const std::tuple<Args...>& args_tuple,
+                              std::index_sequence<Is...>) {
+  call_for_parallel_for(
       (Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
            Impl::ParallelFor<
                std::tuple_element_t<2 * Is + 1, std::tuple<Args...>>,
@@ -216,15 +216,14 @@ template <
     bool Polly = false, StringAssumption StrAssumption = "", class... Args,
     class Enable =
         std::enable_if_t<(sizeof...(Args) > 0 && sizeof...(Args) % 2 == 0)>>
-inline void multi_parallel_for(const std::string& str, const Args&... args) {
-  static_assert(
-      sizeof...(Args) > 0,
-      "multi_parallel_for requires at least one policy/functor pair.");
+inline void parallel_for(const std::string& str, const Args&... args) {
+  static_assert(sizeof...(Args) > 0,
+                "parallel_for requires at least one policy/functor pair.");
   static_assert(sizeof...(Args) % 2 == 0,
-                "multi_parallel_for requires an even number of arguments "
+                "parallel_for requires an even number of arguments "
                 "(policy/functor pairs).");
 
-  Impl::multi_parallel_for_impl<Polly, StrAssumption>(
+  Impl::parallel_for_impl<Polly, StrAssumption>(
       str, std::make_tuple(args...),
       std::make_index_sequence<sizeof...(Args) / 2>{});
 }
