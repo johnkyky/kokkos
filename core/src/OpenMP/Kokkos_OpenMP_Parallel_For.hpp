@@ -56,8 +56,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   template <StringAssumption StrAssumption>
   __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
       const FunctorType& functor, const Policy policy) {
-    constexpr StringAssumption Backend = StringAssumption("OpenMP");
-    __builtin_annotation((intptr_t)Backend.value, "backend");
+    const char* BackendStr = "OpenMP";
+    __builtin_annotation((intptr_t)BackendStr, "backend");
     __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
     const Member l0 = policy.begin();
     const Member u0 = policy.end();
@@ -73,8 +73,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   __attribute__((noinline, annotate("findscop"))) inline static auto
   getExec_range(const FunctorType& functor, const Policy policy) {
     auto lambda = [&]() -> void {
-      constexpr StringAssumption Backend = StringAssumption("OpenMP");
-      __builtin_annotation((intptr_t)Backend.value, "backend");
+      const char* BackendStr = "OpenMP";
+      __builtin_annotation((intptr_t)BackendStr, "backend");
       __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
       const Member l0 = policy.begin();
       const Member u0 = policy.end();
