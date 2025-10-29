@@ -169,7 +169,7 @@ template <bool Polly = false, StringAssumption StrAssumption = "",
 inline void parallel_for(
     const ExecPolicy& policy, const FunctorType& functor,
     std::enable_if_t<is_execution_policy<ExecPolicy>::value>* = nullptr) {
-  Kokkos::parallel_for<Polly>("", policy, functor);
+  Kokkos::parallel_for<Polly, StrAssumption>("", policy, functor);
 }
 
 template <bool Polly = false, StringAssumption StrAssumption = "",
@@ -182,13 +182,13 @@ inline void parallel_for(const std::string& str, const size_t work_count,
   using policy = RangePolicy<execution_space>;
 
   policy execution_policy = policy(0, work_count);
-  ::Kokkos::parallel_for<Polly>(str, execution_policy, functor);
+  ::Kokkos::parallel_for<Polly, StrAssumption>(str, execution_policy, functor);
 }
 
 template <bool Polly = false, StringAssumption StrAssumption = "",
           class FunctorType>
 inline void parallel_for(const size_t work_count, const FunctorType& functor) {
-  ::Kokkos::parallel_for<Polly>("", work_count, functor);
+  ::Kokkos::parallel_for<Polly, StrAssumption>("", work_count, functor);
 }
 
 namespace Impl {
