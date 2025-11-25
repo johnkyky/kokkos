@@ -34,19 +34,19 @@
  */
 
 #define KOKKOS_VERSION_LESS(MAJOR, MINOR, PATCH) \
-  (KOKKOS_VERSION < ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
+  (KOKKOS_VERSION < ((MAJOR) * 10000 + (MINOR) * 100 + (PATCH)))
 
 #define KOKKOS_VERSION_LESS_EQUAL(MAJOR, MINOR, PATCH) \
-  (KOKKOS_VERSION <= ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
+  (KOKKOS_VERSION <= ((MAJOR) * 10000 + (MINOR) * 100 + (PATCH)))
 
 #define KOKKOS_VERSION_GREATER(MAJOR, MINOR, PATCH) \
-  (KOKKOS_VERSION > ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
+  (KOKKOS_VERSION > ((MAJOR) * 10000 + (MINOR) * 100 + (PATCH)))
 
 #define KOKKOS_VERSION_GREATER_EQUAL(MAJOR, MINOR, PATCH) \
-  (KOKKOS_VERSION >= ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
+  (KOKKOS_VERSION >= ((MAJOR) * 10000 + (MINOR) * 100 + (PATCH)))
 
 #define KOKKOS_VERSION_EQUAL(MAJOR, MINOR, PATCH) \
-  (KOKKOS_VERSION == ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
+  (KOKKOS_VERSION == ((MAJOR) * 10000 + (MINOR) * 100 + (PATCH)))
 
 #if !KOKKOS_VERSION_EQUAL(KOKKOS_VERSION_MAJOR, KOKKOS_VERSION_MINOR, \
                           KOKKOS_VERSION_PATCH)
@@ -129,6 +129,11 @@
 
 #if !defined(KOKKOS_CLASS_LAMBDA)
 #define KOKKOS_CLASS_LAMBDA [ =, *this ]
+#endif
+
+#if not defined(KOKKOS_LOOP_BOUND)
+#define KOKKOS_LOOP_BOUND(variable) \
+  __builtin_annotation(variable, "var " #variable)
 #endif
 
 // #if !defined( __CUDA_ARCH__ ) // Not compiling Cuda code to 'ptx'.
@@ -570,15 +575,15 @@ static constexpr bool kokkos_omp_on_host() { return false; }
 #if (defined(KOKKOS_ENABLE_CUDA) && defined(__CUDA_ARCH__)) ||         \
     (defined(KOKKOS_ENABLE_HIP) && defined(__HIP_DEVICE_COMPILE__)) || \
     (defined(KOKKOS_ENABLE_SYCL) && defined(__SYCL_DEVICE_ONLY__))
-#define KOKKOS_IF_ON_DEVICE(CODE) \
-  { KOKKOS_IMPL_STRIP_PARENS(CODE) }
+#define KOKKOS_IF_ON_DEVICE(CODE) {KOKKOS_IMPL_STRIP_PARENS(CODE)}
 #define KOKKOS_IF_ON_HOST(CODE) \
-  {}
+  {                             \
+  }
 #else
 #define KOKKOS_IF_ON_DEVICE(CODE) \
-  {}
-#define KOKKOS_IF_ON_HOST(CODE) \
-  { KOKKOS_IMPL_STRIP_PARENS(CODE) }
+  {                               \
+  }
+#define KOKKOS_IF_ON_HOST(CODE) {KOKKOS_IMPL_STRIP_PARENS(CODE)}
 #endif
 #endif
 
