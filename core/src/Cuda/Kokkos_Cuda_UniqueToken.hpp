@@ -26,8 +26,8 @@
 namespace Kokkos {
 
 namespace Impl {
-Kokkos::View<uint32_t*, Kokkos::CudaSpace> cuda_global_unique_token_locks(
-    bool deallocate = false);
+Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>
+cuda_global_unique_token_locks(bool deallocate = false);
 }
 
 namespace Experimental {
@@ -38,7 +38,7 @@ namespace Experimental {
 template <>
 class UniqueToken<Cuda, UniqueTokenScope::Global> {
  protected:
-  Kokkos::View<uint32_t*, Kokkos::CudaSpace> m_locks;
+  Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace> m_locks;
 
  public:
   using execution_space = Cuda;
@@ -50,11 +50,11 @@ class UniqueToken<Cuda, UniqueTokenScope::Global> {
  protected:
   // These are constructors for the Instance version
   UniqueToken(size_type max_size) {
-    m_locks = Kokkos::View<uint32_t*, Kokkos::CudaSpace>(
+    m_locks = Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>(
         "Kokkos::UniqueToken::m_locks", max_size);
   }
   UniqueToken(size_type max_size, execution_space const& exec) {
-    m_locks = Kokkos::View<uint32_t*, Kokkos::CudaSpace>(
+    m_locks = Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>(
         Kokkos::view_alloc(exec, "Kokkos::UniqueToken::m_locks"), max_size);
   }
 

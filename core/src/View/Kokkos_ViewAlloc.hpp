@@ -120,7 +120,7 @@ struct ViewValueFunctor {
 #endif
     const Kokkos::Impl::ParallelFor<ViewValueFunctor, PolicyType> closure(
         *this, policy);
-    closure.execute();
+    closure.template execute<false, "">();
     if (Kokkos::Profiling::profileLibraryLoaded()) {
       Kokkos::Profiling::endParallelFor(kpID);
     }

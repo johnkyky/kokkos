@@ -222,7 +222,7 @@ class CudaInternal {
       cudaGraph_t graph, const cudaGraphNode_t* from, const cudaGraphNode_t* to,
       size_t numDependencies) const {
     set_cuda_device();
-    return cudaGraphAddDependencies(graph, from, to, numDependencies);
+    return cudaGraphAddDependencies(graph, from, to, nullptr, numDependencies);
   }
 
   cudaError_t cuda_graph_add_empty_node_wrapper(
@@ -276,7 +276,19 @@ class CudaInternal {
   cudaError_t cuda_mem_prefetch_async_wrapper(const void* devPtr, size_t count,
                                               int dstDevice) const {
     set_cuda_device();
-    return cudaMemPrefetchAsync(devPtr, count, dstDevice, m_stream);
+    // return cudaMemPrefetchAsync(devPtr, count, dstDevice, m_stream);
+    cudaMemLocation loc;
+    // Dans Kokkos, dstDevice peut parfois être une constante spéciale pour le
+    // CPU
+    if (dstDevice == cudaCpuDeviceId) {
+      loc.type = cudaMemLocationTypeHost;
+      loc.id   = 0;
+    } else {
+      loc.type = cudaMemLocationTypeDevice;
+      loc.id   = dstDevice;
+    }
+    // Le 4ème argument (0) correspond aux flags demandés par la nouvelle API
+    return cudaMemPrefetchAsync(devPtr, count, loc, 0, m_stream);
   }
 
   cudaError_t cuda_memcpy_wrapper(void* dst, const void* src, size_t count,

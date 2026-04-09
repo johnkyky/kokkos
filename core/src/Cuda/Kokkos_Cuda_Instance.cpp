@@ -125,14 +125,15 @@ std::size_t scratch_count(const std::size_t size) {
 
 }  // namespace
 
-Kokkos::View<uint32_t *, Kokkos::CudaSpace> cuda_global_unique_token_locks(
-    bool deallocate) {
-  static Kokkos::View<uint32_t *, Kokkos::CudaSpace> locks =
-      Kokkos::View<uint32_t *, Kokkos::CudaSpace>();
+Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>
+cuda_global_unique_token_locks(bool deallocate) {
+  static Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace> locks =
+      Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>();
   if (!deallocate && locks.extent(0) == 0)
-    locks = Kokkos::View<uint32_t *, Kokkos::CudaSpace>(
+    locks = Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>(
         "Kokkos::UniqueToken<Cuda>::m_locks", Kokkos::Cuda().concurrency());
-  if (deallocate) locks = Kokkos::View<uint32_t *, Kokkos::CudaSpace>();
+  if (deallocate)
+    locks = Kokkos::View<"default", uint32_t*, Kokkos::CudaSpace>();
   return locks;
 }
 

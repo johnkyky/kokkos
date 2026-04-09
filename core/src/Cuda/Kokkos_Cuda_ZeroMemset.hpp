@@ -24,7 +24,7 @@ namespace Kokkos {
 namespace Impl {
 
 template <>
-struct ZeroMemset<Kokkos::Cuda> {
+struct ZeroMemset<"default", Kokkos::Cuda> {
   ZeroMemset(const Kokkos::Cuda& exec_space_instance, void* dst, size_t cnt) {
     KOKKOS_IMPL_CUDA_SAFE_CALL(
         (exec_space_instance.impl_internal_space_instance()

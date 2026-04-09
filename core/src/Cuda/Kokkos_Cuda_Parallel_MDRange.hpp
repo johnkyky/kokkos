@@ -96,6 +96,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
         .exec_range();
   }
 
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     if (m_rp.m_num_tiles == 0) return;
 
