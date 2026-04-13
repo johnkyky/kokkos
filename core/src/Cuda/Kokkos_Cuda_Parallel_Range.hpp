@@ -60,6 +60,47 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Cuda> {
     m_functor(TagType(), i);
   }
 
+  template <StringAssumption StrAssumption>
+  __attribute__((noinline, annotate("findscop"))) inline static void exec_range(
+      const FunctorType& functor, const Policy& policy) {
+    const char* BackendStr = "Cuda";
+    __builtin_annotation((intptr_t)BackendStr, "backend");
+    __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+    const Member l0 = policy.begin();
+    const Member u0 = policy.end();
+    __builtin_annotation(l0, "lower bound 0");
+    __builtin_annotation(u0, "upper bound 0");
+    for (auto iwork = l0; iwork < u0; ++iwork) {
+      exec_work(functor, iwork);
+    }
+  }
+
+  template <StringAssumption StrAssumption>
+  __attribute__((noinline, annotate("findscop"))) inline static auto
+  getExec_range(const FunctorType& functor, const Policy& policy) {
+    auto lambda = [&]() -> void {
+      const char* BackendStr = "Cuda";
+      __builtin_annotation((intptr_t)BackendStr, "backend");
+      __builtin_annotation((intptr_t)StrAssumption.value, "assumption");
+      const Member l0 = policy.begin();
+      const Member u0 = policy.end();
+      __builtin_annotation(l0, "lower bound 0");
+      __builtin_annotation(u0, "upper bound 0");
+      for (auto iwork = l0; iwork < u0; ++iwork) {
+        exec_work(functor, iwork);
+      }
+    };
+    return lambda;
+  }
+
+  inline static void exec_work(const FunctorType& functor, const Member iwork) {
+    if constexpr (std::is_void_v<WorkTag>) {
+      functor(iwork);
+    } else {
+      functor(WorkTag{}, iwork);
+    }
+  }
+
  public:
   using functor_type = FunctorType;
 
@@ -84,7 +125,18 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::Cuda> {
   }
 
   template <bool Polly, StringAssumption StrAssumption>
+  inline auto getExecute() const {
+    assert(Polly && "Polly needs to be true to use getExecute");
+    return this->template getExec_range<StrAssumption>(m_functor, m_policy);
+  }
+
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
+    if constexpr (Polly) {
+      exec_range<StrAssumption>(m_functor, m_policy);
+      return;
+    }
+
     const typename Policy::index_type nwork = m_policy.end() - m_policy.begin();
 
     cudaFuncAttributes attr =

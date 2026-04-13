@@ -97,7 +97,26 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
   }
 
   template <bool Polly, StringAssumption StrAssumption>
+  inline auto getExecute() const {
+    assert(Polly && "Polly needs to be true to use getExecute");
+    const typename Kokkos::Impl::HostIterate<StrAssumption, "Cuda", Policy,
+                                             FunctorType,
+                                             typename Policy::work_tag, void>
+        iter(m_rp, m_functor);
+    return iter.getHostIterateFunction();
+  }
+
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
+    if constexpr (Polly) {
+      const typename Kokkos::Impl::HostIterate<StrAssumption, "Cuda", Policy,
+                                               FunctorType,
+                                               typename Policy::work_tag, void>
+          iter(m_rp, m_functor);
+      iter();
+      return;
+    }
+
     if (m_rp.m_num_tiles == 0) return;
 
     // maximum number of threads in each dimension of the block as fetched by
