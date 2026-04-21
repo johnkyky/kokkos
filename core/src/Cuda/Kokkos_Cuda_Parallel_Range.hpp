@@ -340,6 +340,7 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
     return n;
   }
 
+  template <bool Polly>
   inline void execute() {
     const index_type nwork     = m_policy.end() - m_policy.begin();
     const bool need_device_set = ReducerType::has_init_member_function() ||
