@@ -502,6 +502,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
     }
   }
 
+  template <bool Polly, StringAssumption StrAssumption>
   inline void execute() const {
     const int64_t shmem_size_total = m_shmem_begin + m_shmem_size;
     dim3 grid(int(m_league_size), 1, 1);
