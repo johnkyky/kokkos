@@ -2360,15 +2360,12 @@ struct HostIterate<StrAssumption, Backend, RP, Functor, Tag, ValueType,
 
   inline void operator()() const {
     // std::cout << "HostIterate ParallelFor" << std::endl;
-    Loop_Type<StrAssumption, Backend, RP::rank, index_type,
-              (RP::inner_direction == Iterate::Left), Tag>::apply(m_func,
-                                                                  m_rp.m_lower,
-                                                                  m_rp.m_upper);
+    Loop_Type<StrAssumption, Backend, RP::rank, index_type, false, Tag>::apply(
+        m_func, m_rp.m_lower, m_rp.m_upper);
   }
 
   auto getHostIterateFunction(/*RP const& rp, Functor const& func*/) const {
-    return Loop_Type<StrAssumption, Backend, RP::rank, index_type,
-                     (RP::inner_direction == Iterate::Left),
+    return Loop_Type<StrAssumption, Backend, RP::rank, index_type, false,
                      Tag>::getApply(m_func, m_rp.m_lower, m_rp.m_upper);
   }
 
